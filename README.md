@@ -79,10 +79,17 @@ redis:
   }
 ```
 
-## RedisCounters::UniqueValuesList
+## RedisCounters::UniqueValuesLists::Standard
 
 Список уникальных значений, с возможностью группировки и партиционирования значений.
-Помимо списка значений, ведет так же, список партиций, для каждой группы.
+
+Особенности:
+- Использует механизм оптимистичных блокировок.
+- Помимо списка значений, ведет так же, список партиций, для каждой группы.
+- Полностью транзакционен - сторонний блок, выполняемый после добавления уникального элемента,
+  выполняется в той же транзакции, в которой добавляется уникальный элемент.
+
+Вероятно, в условиях большой конкурентности, обладает не лучшей производительносью из-за частых блокировок.
 
 Обязательные параметры: counter_name и value_keys.
 
@@ -93,7 +100,7 @@ redis:
 
 Простой список уникальных пользователей.
 ```ruby
-counter = RedisCounters::UniqueValuesList.new(redis, {
+counter = RedisCounters::UniqueValuesLists::Standard.new(redis, {
   :counter_name => :users,
   :value_keys   => [:user_id]
 })
@@ -108,7 +115,7 @@ redis:
 
 Список уникальных пользователей, посетивших компаниию, за месяц, сгруппированный по суткам.
 ```ruby
-counter = RedisCounters::UniqueValuesList.new(redis, {
+counter = RedisCounters::UniqueValuesLists::Standard.new(redis, {
   :counter_name   => :company_users_by_month,
   :value_keys     => [:company_id, :user_id],
   :group_keys     => [:start_month_date],
@@ -130,13 +137,30 @@ redis:
   company_users_by_month:2013-09-01:2013-09-05 = ['1:22']
 ```
 
+## RedisCounters::UniqueValuesLists::Fast
+
+Быстрый список уникальных значений, с возможностью группировки и партиционирования значений.
+
+Скорость работы достигается за счет следующих особенностей:
+- Использует 2х объема памяти для хранения элементов,
+при использовании партиционирования.
+Eсли партиционирование не используется, то расход памяти такой-же как у UniqueValuesLists::Standard.
+- Не транзакционен - сторонний блок, выполняемый после добавления уникального элемента,
+выполняется за пределами транзакции, в которой добавляется уникальный элемент.
+- Не ведется список партиций.
+
+Обязательные параметры: counter_name и value_keys.
+
+### Сложность
+  + добавление элемента - O(1)
+
 ## RedisCounters::UniqueHashCounter
 
-Структура на основе двух предыдущих.
+Сборная конструкция на основе предыдущих.
 HashCounter, с возможностью подсчета только у уникальных событий.
 
 ### Сложность
-  аналогично UniqueValuesList.
+  аналогично сложности, используемого уникального списка.
 
 ### Примеры использования
 
@@ -147,6 +171,7 @@ counter = RedisCounters::UniqueHashCounter.new(redis, {
   :group_keys     => [:company_id],
   :partition_keys => [:date],
   :unique_list => {
+    :list_class     => RedisCounters::UniqueValuesLists::Standard
     :value_keys     => [:company_id, :user_id],
     :group_keys     => [:start_month_date],
     :partition_keys => [:date]

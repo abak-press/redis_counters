@@ -1,9 +1,6 @@
-require 'spec_helper'
-
-describe RedisCounters::UniqueValuesList do
+shared_examples_for 'unique_values_lists' do
   let(:redis) { MockRedis.new }
   let(:values) { rand(10) + 1 }
-  let(:partitions_list_postfix) { described_class.const_get(:PARTITIONS_LIST_POSTFIX) }
 
   let(:counter) { described_class.new(redis, options) }
 
@@ -59,18 +56,6 @@ describe RedisCounters::UniqueValuesList do
 
     it { expect(redis.keys('*')).to have(5).key }
 
-    context 'when check partitions' do
-      it { expect(redis.exists("test_counter:group1:#{partitions_list_postfix}")).to be_true }
-      it { expect(redis.exists("test_counter:group2:#{partitions_list_postfix}")).to be_true }
-
-      it { expect(redis.smembers("test_counter:group1:#{partitions_list_postfix}")).to have(2).keys }
-      it { expect(redis.smembers("test_counter:group2:#{partitions_list_postfix}")).to have(1).keys }
-
-      it { expect(redis.smembers("test_counter:group1:#{partitions_list_postfix}")).to include 'part1:part2' }
-      it { expect(redis.smembers("test_counter:group1:#{partitions_list_postfix}")).to include 'part2:part2' }
-      it { expect(redis.smembers("test_counter:group2:#{partitions_list_postfix}")).to include 'part1:part2' }
-    end
-
     context 'when check values' do
       it { expect(redis.exists("test_counter:group1:part1:part2")).to be_true }
       it { expect(redis.exists("test_counter:group1:part2:part2")).to be_true }
@@ -123,15 +108,6 @@ describe RedisCounters::UniqueValuesList do
     before { values.times { counter.process(:param0 => 4, :param1 => 5, :param3 => :part1, :param4 => :part2) } }
 
     it { expect(redis.keys('*')).to have(3).key }
-
-    context 'when check partitions' do
-      it { expect(redis.exists("test_counter:#{partitions_list_postfix}")).to be_true }
-
-      it { expect(redis.smembers("test_counter:#{partitions_list_postfix}")).to have(2).keys }
-
-      it { expect(redis.smembers("test_counter:#{partitions_list_postfix}")).to include 'part1:part2' }
-      it { expect(redis.smembers("test_counter:#{partitions_list_postfix}")).to include 'part2:part2' }
-    end
 
     context 'when check values' do
       it { expect(redis.exists("test_counter:part1:part2")).to be_true }

@@ -1,6 +1,5 @@
 # coding: utf-8
 require 'redis_counters/hash_counter'
-require 'redis_counters/unique_values_list'
 
 module RedisCounters
 
@@ -17,7 +16,7 @@ module RedisCounters
 
     def init
       super
-      @unique_values_list = UniqueValuesList.new(
+      @unique_values_list = unique_values_list_class.new(
         redis,
         unique_values_list_options
       )
@@ -29,6 +28,10 @@ module RedisCounters
 
     def unique_values_list_name
       [counter_name, UNIQUE_LIST_POSTFIX].join(KEY_DELIMITER)
+    end
+
+    def unique_values_list_class
+      unique_values_list_options.fetch(:list_class).to_s.constantize
     end
   end
 

@@ -7,7 +7,7 @@ describe RedisCounters::UniqueHashCounter do
   let(:options) { {
       :counter_name => :test_counter,
       :field_name   => :test_field,
-      :unique_list  => {}
+      :unique_list  => { :list_class => RedisCounters::UniqueValuesLists::Standard }
   } }
   let(:counter) { described_class.new(redis, options) }
 
@@ -29,6 +29,7 @@ describe RedisCounters::UniqueHashCounter do
         :group_keys => [:param1],
         :partition_keys => [:date],
         :unique_list  => {
+          :list_class => RedisCounters::UniqueValuesLists::Standard,
           :value_keys => [:sid],
           :group_keys => [:param2],
           :partition_keys => [:date]
