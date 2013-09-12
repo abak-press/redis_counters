@@ -19,7 +19,7 @@ module RedisCounters
     end
 
     def key
-      [counter_name, partition].flatten.join(KEY_DELIMITER)
+      [counter_name, partition].flatten.join(key_delimiter)
     end
 
     def partition
@@ -31,7 +31,7 @@ module RedisCounters
     def field
       group_params = group_keys.map { |key| params.fetch(key) }
       group_params << field_name if field_name.present?
-      group_params.join(KEY_DELIMITER)
+      group_params.join(value_delimiter)
     end
 
     def field_name

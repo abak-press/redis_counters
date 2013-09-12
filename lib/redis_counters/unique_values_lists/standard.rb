@@ -61,7 +61,7 @@ module RedisCounters
         return (@partitions = [nil]) unless use_partitions?
 
         @partitions = redis.smembers(partitions_list_key).map do |partition|
-          partition.split(KEY_DELIMITER)
+          partition.split(key_delimiter)
         end
           .delete_if(&:empty?)
       end
@@ -73,15 +73,15 @@ module RedisCounters
       end
 
       def partitions_list_key
-        [counter_name, group_params, PARTITIONS_LIST_POSTFIX].flatten.join(KEY_DELIMITER)
+        [counter_name, group_params, PARTITIONS_LIST_POSTFIX].flatten.join(key_delimiter)
       end
 
       def current_partition
-        partition_params.flatten.join(KEY_DELIMITER)
+        partition_params.flatten.join(key_delimiter)
       end
 
       def new_partition?
-        !partitions.include?(current_partition.split(KEY_DELIMITER))
+        !partitions.include?(current_partition.split(key_delimiter))
       end
     end
 

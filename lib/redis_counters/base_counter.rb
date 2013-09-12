@@ -1,5 +1,6 @@
 # coding: utf-8
 require 'forwardable'
+require 'active_support/core_ext/class/attribute'
 
 module RedisCounters
 
@@ -7,6 +8,13 @@ module RedisCounters
     extend Forwardable
 
     KEY_DELIMITER = ':'.freeze
+    VALUE_DELIMITER = ':'.freeze
+
+    class_attribute :key_delimiter
+    class_attribute :value_delimiter
+
+    self.key_delimiter = KEY_DELIMITER
+    self.value_delimiter = VALUE_DELIMITER
 
     attr_reader :redis
     attr_reader :options
@@ -36,6 +44,14 @@ module RedisCounters
 
     def counter_name
       @counter_name ||= options.fetch(:counter_name)
+    end
+
+    def key_delimiter
+      @key_delimiter ||= options.fetch(:key_delimiter, self.class.key_delimiter)
+    end
+
+    def value_delimiter
+      @value_delimiter ||= options.fetch(:value_delimiter, self.class.value_delimiter)
     end
 
     def_delegator :redis, :multi, :transaction

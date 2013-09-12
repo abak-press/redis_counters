@@ -10,7 +10,7 @@ module RedisCounters
       protected
 
       def key(partition = partition_params)
-        [counter_name, group_params, partition].flatten.compact.join(KEY_DELIMITER)
+        [counter_name, group_params, partition].flatten.compact.join(key_delimiter)
       end
 
       def group_params
@@ -23,7 +23,7 @@ module RedisCounters
 
       def value
         value_params = value_keys.map { |key| params.fetch(key) }
-        value_params.join(KEY_DELIMITER)
+        value_params.join(value_delimiter)
       end
 
       def use_partitions?

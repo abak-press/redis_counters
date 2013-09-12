@@ -27,7 +27,7 @@ module RedisCounters
     end
 
     def unique_values_list_name
-      [counter_name, UNIQUE_LIST_POSTFIX].join(KEY_DELIMITER)
+      [counter_name, UNIQUE_LIST_POSTFIX].join(key_delimiter)
     end
 
     def unique_values_list_class
