@@ -4,6 +4,9 @@ require 'redis_counters/base_counter'
 module RedisCounters
   module UniqueValuesLists
 
+    # Базовый класс уникального списка значений,
+    # с возможностью группировки и партиционирования.
+
     class Base < RedisCounters::BaseCounter
       alias_method :add, :process
 

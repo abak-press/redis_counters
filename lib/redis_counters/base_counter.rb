@@ -4,6 +4,8 @@ require 'active_support/core_ext/class/attribute'
 
 module RedisCounters
 
+  # Базовый класс счетчика на основе Redis.
+
   class BaseCounter
     extend Forwardable
 
@@ -20,17 +22,39 @@ module RedisCounters
     attr_reader :options
     attr_reader :params
 
+    # Public: Фабричный метод создания счетчика заданного класса.
+    #
+    # redis - Redis - экземпляр redis - клиента.
+    # opts - Hash - хеш опций счетчика:
+    #        counter_name - Symbol/String - идентификатор счетчика.
+    #        key_delimiter - String - разделитель ключа (опционально).
+    #        value_delimiter - String - разделитель значений (опционально).
+    #
+    # Returns RedisCounters::BaseCounter.
+    #
     def self.create(redis, opts)
       counter_class = opts.fetch(:counter_class).to_s.constantize
       counter_class.new(redis, opts)
     end
 
+    # Public: Конструктор.
+    #
+    # см. self.create.
+    #
+    # Returns RedisCounters::BaseCounter.
+    #
     def initialize(redis, opts)
       @redis = redis
       @options = opts
       init
     end
 
+    # Public: Метод производит обработку события.
+    #
+    # params - Hash - хеш параметров события.
+    #
+    # Returns process_value result.
+    #
     def process(params = {}, &block)
       @params = params
       process_value(&block)

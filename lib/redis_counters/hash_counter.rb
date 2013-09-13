@@ -3,6 +3,8 @@ require 'redis_counters/base_counter'
 
 module RedisCounters
 
+  # Счетчик на основе redis-hash, с возможностью партиционирования и группировки значений.
+
   class HashCounter < BaseCounter
     alias_method :increment, :process
 

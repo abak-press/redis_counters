@@ -4,6 +4,13 @@ require 'redis_counters/unique_values_lists/base'
 module RedisCounters
   module UniqueValuesLists
 
+    # Список уникального значений, на основе не блокирующего алгоритма.
+    #
+    # Особенности:
+    #   * 2-х кратный расхзод памяти в случае использования партиций;
+    #   * Не ведет список партиций;
+    #   * Не транзакционен.
+
     class Fast < UniqueValuesLists::Base
 
       protected

@@ -3,6 +3,8 @@ require 'redis_counters/hash_counter'
 
 module RedisCounters
 
+  # HashCounter, с возможностью подсчета только уникальных значений.
+
   class UniqueHashCounter < HashCounter
     UNIQUE_LIST_POSTFIX = 'uq'.freeze
 
