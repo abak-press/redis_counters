@@ -1,0 +1,6 @@
+
+v1.0.0beta1
+  - 2013/09/12: feature(all) introduce key and value delimiters (Artem Napolskih)
+  - 2013/09/12: feature(unique_values_list): fast (non blocking) unique values list added (Artem Napolskih)
+  - 2013/09/11: Initial commit (Artem Napolskih)
+  - 2013/08/21: dummy commit (napolskih)
