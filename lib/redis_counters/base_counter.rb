@@ -56,7 +56,7 @@ module RedisCounters
     # Returns process_value result.
     #
     def process(params = {}, &block)
-      @params = params
+      @params = params.with_indifferent_access
       process_value(&block)
     end
 

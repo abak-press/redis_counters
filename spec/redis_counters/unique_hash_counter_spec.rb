@@ -50,9 +50,9 @@ describe RedisCounters::UniqueHashCounter do
     it { expect(redis.keys('*')).to have(7).key }
 
     it { expect(redis.keys('*')).to include 'test_counter:2013-04-27' }
-    it { expect(redis.hget('test_counter:2013-04-27', '1:test_field')).to eq 2.to_s }
-    it { expect(redis.hget('test_counter:2013-04-27', '2:test_field')).to eq 2.to_s }
-    it { expect(redis.hget('test_counter:2013-04-28', '2:test_field')).to eq 2.to_s }
+    it { expect(redis.hget('test_counter:2013-04-27', '1')).to eq 2.to_s }
+    it { expect(redis.hget('test_counter:2013-04-27', '2')).to eq 2.to_s }
+    it { expect(redis.hget('test_counter:2013-04-28', '2')).to eq 2.to_s }
 
     it { expect(redis.smembers('test_counter:uq:1:partitions')).to eq ['2013-04-27', '2013-04-28'] }
     it { expect(redis.smembers('test_counter:uq:2:partitions')).to eq ['2013-04-27'] }
