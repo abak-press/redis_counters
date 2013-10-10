@@ -16,16 +16,22 @@
 Простой счетчик значений.
 ```ruby
 counter = RedisCounters::HashCounter.new(redis, {
-  :counter_name => :pages_by_day,
+  :counter_name => :simple_counter,
   :field_name   => :pages
 })
 
 5.times { counter.increment }
 
 redis:
-  pages_by_day = {
+  simple_counter = {
     pages => 5
   }
+
+> counter.partitions
+=> [{}]
+
+> counter.data
+=> [{:value=>5}]
 ```
 
 Счетчик посещенных страниц компании с партиционированием по дате.
@@ -36,9 +42,9 @@ counter = RedisCounters::HashCounter.new(redis, {
   :partition_keys => [:date]
 })
 
-2.times { counter.increment(:company_id = 1, :date => '2013-08-01') }
-3.times { counter.increment(:company_id = 2, :date => '2013-08-01') }
-1.times { counter.increment(:company_id = 3, :date => '2013-08-02') }
+2.times { counter.increment(:company_id => 1, :date => '2013-08-01') }
+3.times { counter.increment(:company_id => 2, :date => '2013-08-01') }
+1.times { counter.increment(:company_id => 3, :date => '2013-08-02') }
 
 redis:
   pages_by_day:2013-08-01 = {
@@ -48,6 +54,29 @@ redis:
   pages_by_day:2013-08-02 = {
     3 => 1
   }
+
+> counter.partitions
+=> [{:date=>"2013-08-01"}, {:date=>"2013-08-02"}]
+
+> counter.data
+=> [{:company_id=>"1", :value=>2},
+ {:company_id=>"2", :value=>3},
+ {:company_id=>"3", :value=>1}]
+
+> counter.delete_partitions!(:date => '2013-08-01')
+=> [1]
+
+> counter.partitions
+=> [{:date=>"2013-08-02"}]
+
+> counter.data
+=> [{:company_id=>"3", :value=>1}]
+
+> counter.delete_all!
+=> [1]
+
+> counter.data
+=> []
 ```
 
 Тоже самое, но партиция задается с помощью proc.
@@ -59,24 +88,57 @@ counter = RedisCounters::HashCounter.new(redis, {
 })
 ```
 
-Счетчик посещенных страниц компании с группировкой по городу посетителя и партиционированием по дате.
+Счетчик посещенных страниц с группировкой по городу посетителя и партиционированием по дате и компании.
 ```ruby
 counter = RedisCounters::HashCounter.new(redis, {
-  :counter_name   => :pages_by_day,
-  :group_keys     => [:company_id, city_id],
-  :partition_keys => [:date]
+  :counter_name   => :pages_by_day_city,
+  :group_keys     => [:company_id, :city_id],
+  :partition_keys => [:date, :company_id]
 })
 
-2.times { counter.increment(:company_id = 1, :city_id => 11, :date => '2013-08-01') }
-1.times { counter.increment(:company_id = 1, :city_id => 12, :date => '2013-08-01') }
-3.times { counter.increment(:company_id = 2, :city_id => 11, :date => '2013-08-01') }
+2.times { counter.increment(:date => '2013-08-01', :company_id => 1, :city_id => 11) }
+1.times { counter.increment(:date => '2013-08-01', :company_id => 1, :city_id => 12) }
+4.times { counter.increment(:date => '2013-08-01', :company_id => 2, :city_id => 10) }
+3.times { counter.increment(:date => '2013-08-02', :company_id => 1, :city_id => 15) }
 
 redis:
-  pages_by_day:2013-08-01 = {
+  pages_by_day_city:2013-08-01:1 = {
     1:11 => 2,
-    1:12 => 1,
-    2_11 => 3
+    1:12 => 1
   }
+
+  pages_by_day_city:2013-08-01:2 = {
+    2:10 => 4
+  }
+
+  pages_by_day_city:2013-08-02:1 = {
+    1:15 => 3
+  }
+
+> counter.partitions
+=> [{:date=>"2013-08-02", :company_id=>"1"},
+ {:date=>"2013-08-01", :company_id=>"1"},
+ {:date=>"2013-08-01", :company_id=>"2"}]
+
+> counter.partitions(:date => '2013-08-01')
+=> [{:date=>"2013-08-01", :company_id=>"1"},
+ {:date=>"2013-08-01", :company_id=>"2"}]
+
+> counter.data
+=> [{:company_id => 1, :city_id=>"15", :value=>3},
+ {:company_id => 1, :city_id=>"11", :value=>2},
+ {:company_id => 1, :city_id=>"12", :value=>1},
+ {:company_id => 2, :city_id=>"10", :value=>4}]
+
+> counter.data(:date => '2013-08-01')
+=> [{:company_id => 1, :city_id=>"11", :value=>2},
+ {:company_id => 1, :city_id=>"12", :value=>1},
+ {:company_id => 2, :city_id=>"10", :value=>4}]
+
+> counter.data(:date => '2013-08-01') { |batch| puts batch }
+{:company_id => 1, :city_id=>"11", :value=>2}
+{:company_id => 1, :city_id=>"12", :value=>1}
+{:company_id => 2, :city_id=>"10", :value=>4}
 ```
 
 ## RedisCounters::UniqueValuesLists::Standard
@@ -122,11 +184,11 @@ counter = RedisCounters::UniqueValuesLists::Standard.new(redis, {
   :partition_keys => [:date]
 })
 
-2.times { counter.add(:company_id = 1, :user_id => 11, :date => '2013-08-10', :start_month_date => '2013-08-01') }
-3.times { counter.add(:company_id = 1, :user_id => 22, :date => '2013-08-10', :start_month_date => '2013-08-01') }
-3.times { counter.add(:company_id = 1, :user_id => 22, :date => '2013-09-05', :start_month_date => '2013-09-01') }
-3.times { counter.add(:company_id = 2, :user_id => 11, :date => '2013-08-10', :start_month_date => '2013-08-01') }
-1.times { counter.add(:company_id = 2, :user_id => 22, :date => '2013-08-11', :start_month_date => '2013-08-01') }
+2.times { counter.add(:company_id => 1, :user_id => 11, :date => '2013-08-10', :start_month_date => '2013-08-01') }
+3.times { counter.add(:company_id => 1, :user_id => 22, :date => '2013-08-10', :start_month_date => '2013-08-01') }
+3.times { counter.add(:company_id => 1, :user_id => 22, :date => '2013-09-05', :start_month_date => '2013-09-01') }
+3.times { counter.add(:company_id => 2, :user_id => 11, :date => '2013-08-10', :start_month_date => '2013-08-01') }
+1.times { counter.add(:company_id => 2, :user_id => 22, :date => '2013-08-11', :start_month_date => '2013-08-01') }
 
 redis:
   company_users_by_month:2013-08-01:partitions = ['2013-08-10', '2013-08-11']
@@ -178,11 +240,11 @@ counter = RedisCounters::UniqueHashCounter.new(redis, {
   }
 })
 
-2.times { counter.increment(:company_id = 1, :user_id => 11, :date => '2013-08-10', :start_month_date => '2013-08-01') }
-3.times { counter.increment(:company_id = 1, :user_id => 22, :date => '2013-08-10', :start_month_date => '2013-08-01') }
-3.times { counter.increment(:company_id = 1, :user_id => 22, :date => '2013-09-05', :start_month_date => '2013-09-01') }
-3.times { counter.increment(:company_id = 2, :user_id => 11, :date => '2013-08-10', :start_month_date => '2013-08-01') }
-1.times { counter.increment(:company_id = 2, :user_id => 22, :date => '2013-08-11', :start_month_date => '2013-08-01') }
+2.times { counter.increment(:company_id => 1, :user_id => 11, :date => '2013-08-10', :start_month_date => '2013-08-01') }
+3.times { counter.increment(:company_id => 1, :user_id => 22, :date => '2013-08-10', :start_month_date => '2013-08-01') }
+3.times { counter.increment(:company_id => 1, :user_id => 22, :date => '2013-09-05', :start_month_date => '2013-09-01') }
+3.times { counter.increment(:company_id => 2, :user_id => 11, :date => '2013-08-10', :start_month_date => '2013-08-01') }
+1.times { counter.increment(:company_id => 2, :user_id => 22, :date => '2013-08-11', :start_month_date => '2013-08-01') }
 
 redis:
   company_users_by_month:2013-08-10 = {

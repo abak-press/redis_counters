@@ -4,6 +4,16 @@ require 'redis_counters/unique_values_lists/base'
 module RedisCounters
   module UniqueValuesLists
 
+    # Список уникального значений, на основе механизма оптимистических блокировок.
+    #
+    # смотри Optimistic locking using check-and-set:
+    # http://redis.io/topics/transactions
+    #
+    # Особенности:
+    #   * Значения сохраняет в партициях;
+    #   * Ведет список партиций;
+    #   * Полностью транзакционен.
+
     class Standard < Base
       PARTITIONS_LIST_POSTFIX = :partitions
 
