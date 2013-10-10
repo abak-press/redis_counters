@@ -9,7 +9,27 @@ describe RedisCounters::UniqueHashCounter do
       :field_name   => :test_field,
       :unique_list  => { :list_class => RedisCounters::UniqueValuesLists::Standard }
   } }
+
   let(:counter) { described_class.new(redis, options) }
+
+  context '#partitions' do
+    let(:options) { {
+        :counter_name => :visits_by_day,
+        :field_name => 'dd',
+        :partition_keys => [:date],
+        :unique_list  => {
+            :list_class => RedisCounters::UniqueValuesLists::Fast,
+            :value_keys => [:sid],
+            :group_keys => [:p1],
+            :partition_keys => [:p2]
+        }
+    } }
+
+    before { counter.process(:date => '2013-10-17', :p1 => '2', :p2 => '3', :sid => '1') }
+
+    it { expect(counter.partitions).to have(1).partitions }
+    it { expect(counter.partitions.first).to include ({:date => '2013-10-17'}) }
+  end
 
   it { expect(counter).to be_a_kind_of RedisCounters::HashCounter }
 
@@ -54,10 +74,10 @@ describe RedisCounters::UniqueHashCounter do
     it { expect(redis.hget('test_counter:2013-04-27', '2')).to eq 2.to_s }
     it { expect(redis.hget('test_counter:2013-04-28', '2')).to eq 2.to_s }
 
-    it { expect(redis.smembers('test_counter:uq:1:partitions')).to eq ['2013-04-27', '2013-04-28'] }
-    it { expect(redis.smembers('test_counter:uq:2:partitions')).to eq ['2013-04-27'] }
-    it { expect(redis.smembers('test_counter:uq:1:2013-04-27')).to eq ['4'] }
-    it { expect(redis.smembers('test_counter:uq:2:2013-04-27')).to eq ['3', '2', '1'] }
-    it { expect(redis.smembers('test_counter:uq:1:2013-04-28')).to eq ['5', '1'] }
+    it { expect(redis.lrange('test_counter_uq:1:partitions', 0, -1)).to eq ['2013-04-28', '2013-04-27'] }
+    it { expect(redis.lrange('test_counter_uq:2:partitions', 0, -1)).to eq ['2013-04-27'] }
+    it { expect(redis.smembers('test_counter_uq:1:2013-04-27')).to eq ['4'] }
+    it { expect(redis.smembers('test_counter_uq:2:2013-04-27')).to eq ['3', '2', '1'] }
+    it { expect(redis.smembers('test_counter_uq:1:2013-04-28')).to eq ['5', '1'] }
   end
 end

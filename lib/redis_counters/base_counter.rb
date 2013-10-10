@@ -12,12 +12,6 @@ module RedisCounters
     KEY_DELIMITER = ':'.freeze
     VALUE_DELIMITER = ':'.freeze
 
-    class_attribute :key_delimiter
-    class_attribute :value_delimiter
-
-    self.key_delimiter = KEY_DELIMITER
-    self.value_delimiter = VALUE_DELIMITER
-
     attr_reader :redis
     attr_reader :options
     attr_reader :params
@@ -60,6 +54,12 @@ module RedisCounters
       process_value(&block)
     end
 
+    def name
+      options[:counter_name]
+    end
+
+    alias_method :id, :name
+
     protected
 
     def init
@@ -71,11 +71,11 @@ module RedisCounters
     end
 
     def key_delimiter
-      @key_delimiter ||= options.fetch(:key_delimiter, self.class.key_delimiter)
+      @key_delimiter ||= options.fetch(:key_delimiter, KEY_DELIMITER)
     end
 
     def value_delimiter
-      @value_delimiter ||= options.fetch(:value_delimiter, self.class.value_delimiter)
+      @value_delimiter ||= options.fetch(:value_delimiter, VALUE_DELIMITER)
     end
 
     def_delegator :redis, :multi, :transaction

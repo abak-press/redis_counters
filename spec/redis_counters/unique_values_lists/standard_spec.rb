@@ -26,15 +26,15 @@ describe RedisCounters::UniqueValuesLists::Standard do
       it { expect(redis.keys('*')).to have(5).key }
 
       context 'when check partitions' do
-        it { expect(redis.exists("test_counter:group1:#{partitions_list_postfix}")).to be_true }
-        it { expect(redis.exists("test_counter:group2:#{partitions_list_postfix}")).to be_true }
+        it { expect(redis.lrange("test_counter:group1:#{partitions_list_postfix}", 0, -1)).to be_true }
+        it { expect(redis.lrange("test_counter:group2:#{partitions_list_postfix}", 0, -1)).to be_true }
 
-        it { expect(redis.smembers("test_counter:group1:#{partitions_list_postfix}")).to have(2).keys }
-        it { expect(redis.smembers("test_counter:group2:#{partitions_list_postfix}")).to have(1).keys }
+        it { expect(redis.lrange("test_counter:group1:#{partitions_list_postfix}", 0, -1)).to have(2).keys }
+        it { expect(redis.lrange("test_counter:group2:#{partitions_list_postfix}", 0, -1)).to have(1).keys }
 
-        it { expect(redis.smembers("test_counter:group1:#{partitions_list_postfix}")).to include 'part1:part2' }
-        it { expect(redis.smembers("test_counter:group1:#{partitions_list_postfix}")).to include 'part2:part2' }
-        it { expect(redis.smembers("test_counter:group2:#{partitions_list_postfix}")).to include 'part1:part2' }
+        it { expect(redis.lrange("test_counter:group1:#{partitions_list_postfix}", 0, -1)).to include 'part1:part2' }
+        it { expect(redis.lrange("test_counter:group1:#{partitions_list_postfix}", 0, -1)).to include 'part2:part2' }
+        it { expect(redis.lrange("test_counter:group2:#{partitions_list_postfix}", 0, -1)).to include 'part1:part2' }
       end
 
       context 'when check values' do
@@ -70,10 +70,10 @@ describe RedisCounters::UniqueValuesLists::Standard do
       context 'when check partitions' do
         it { expect(redis.exists("test_counter:#{partitions_list_postfix}")).to be_true }
 
-        it { expect(redis.smembers("test_counter:#{partitions_list_postfix}")).to have(2).keys }
+        it { expect(redis.lrange("test_counter:#{partitions_list_postfix}", 0, -1)).to have(2).keys }
 
-        it { expect(redis.smembers("test_counter:#{partitions_list_postfix}")).to include 'part1:part2' }
-        it { expect(redis.smembers("test_counter:#{partitions_list_postfix}")).to include 'part2:part2' }
+        it { expect(redis.lrange("test_counter:#{partitions_list_postfix}", 0, -1)).to include 'part1:part2' }
+        it { expect(redis.lrange("test_counter:#{partitions_list_postfix}", 0, -1)).to include 'part2:part2' }
       end
 
       context 'when check values' do

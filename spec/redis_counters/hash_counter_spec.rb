@@ -6,17 +6,6 @@ describe RedisCounters::HashCounter do
   let(:options) { { :counter_name => :test_counter, :field_name => :test_field } }
   let(:counter) { described_class.new(redis, options) }
 
-  context 'when check interface' do
-    it { expect(counter).to respond_to :process }
-    it { expect(counter).to respond_to :increment }
-    it { expect(counter).to respond_to :partitions }
-    it { expect(counter).to respond_to :partitions_raw }
-    it { expect(counter).to respond_to :data }
-    it { expect(counter).to respond_to :delete_all! }
-    it { expect(counter).to respond_to :delete_partitions! }
-    it { expect(counter).to respond_to :delete_partition_direct! }
-  end
-
   context 'when field_name and group_keys not given' do
     let(:options) { { :counter_name => :test_counter } }
 
@@ -45,11 +34,14 @@ describe RedisCounters::HashCounter do
       } }
 
       before { value.times { counter.process(:param1 => 11, :param2 => 22, :param3 => 33) } }
+      before { value.times { counter.process(:param1 => 11, :param2 => nil, :param3 => 33) } }
 
       it { expect(redis.keys('*')).to have(1).key }
       it { expect(redis.keys('*').first).to eq 'test_counter' }
       it { expect(redis.hexists('test_counter', '11:22')).to be_true }
       it { expect(redis.hget('test_counter', '11:22')).to eq value.to_s }
+      it { expect(redis.hexists('test_counter', '11:')).to be_true }
+      it { expect(redis.hget('test_counter', '11:')).to eq value.to_s }
     end
 
     context 'when exists group_keys given' do
@@ -61,6 +53,8 @@ describe RedisCounters::HashCounter do
 
       before { value.times { counter.process(:param1 => 11, :param2 => 22, :param3 => 33) } }
       before { 2.times { counter.process(:param1 => 12, :param2 => 22, :param3 => 33) } }
+      before { 1.times { counter.process(:param1 => 12, :param2 => nil, :param3 => 33) } }
+      before { 1.times { counter.process(:param1 => 12, :param2 => '', :param3 => 33) } }
 
       it { expect(redis.keys('*')).to have(1).key }
       it { expect(redis.keys('*').first).to eq 'test_counter' }
@@ -68,6 +62,8 @@ describe RedisCounters::HashCounter do
       it { expect(redis.hget('test_counter', '11:22')).to eq value.to_s }
       it { expect(redis.hexists('test_counter', '12:22')).to be_true }
       it { expect(redis.hget('test_counter', '12:22')).to eq 2.to_s }
+      it { expect(redis.hexists('test_counter', '12:')).to be_true }
+      it { expect(redis.hget('test_counter', '12:')).to eq 2.to_s }
     end
 
     context 'when not exists group_keys given' do
@@ -118,6 +114,30 @@ describe RedisCounters::HashCounter do
       it { expect(redis.hget('test_counter:true', 'test_field')).to eq 2.to_s }
       it { expect(redis.hexists('test_counter:false', 'test_field')).to be_true }
       it { expect(redis.hget('test_counter:false', 'test_field')).to eq 3.to_s }
+    end
+
+    context 'when one partition_key is nil or empty string' do
+      let(:options) { {
+          :counter_name   => :test_counter,
+          :field_name     => :test_field,
+          :partition_keys => [:param1, :param2]
+      } }
+
+      before { value.times { counter.process(:param1 => 11, :param2 => 22, :param3 => 33) } }
+      before { 3.times { counter.process(:param1 => 21, :param2 => 22, :param3 => 33) } }
+      before { 1.times { counter.process(:param1 => 21, :param2 => nil, :param3 => 33) } }
+      before { 1.times { counter.process(:param1 => 21, :param2 => '', :param3 => 33) } }
+
+      it { expect(redis.keys('*')).to have(3).key }
+      it { expect(redis.keys('*').first).to eq 'test_counter:11:22' }
+      it { expect(redis.keys('*').second).to eq 'test_counter:21:22' }
+      it { expect(redis.keys('*').third).to eq 'test_counter:21:' }
+      it { expect(redis.hexists('test_counter:11:22', 'test_field')).to be_true }
+      it { expect(redis.hget('test_counter:11:22', 'test_field')).to eq value.to_s }
+      it { expect(redis.hexists('test_counter:21:22', 'test_field')).to be_true }
+      it { expect(redis.hget('test_counter:21:22', 'test_field')).to eq 3.to_s }
+      it { expect(redis.hexists('test_counter:21:', 'test_field')).to be_true }
+      it { expect(redis.hget('test_counter:21:', 'test_field')).to eq 2.to_s }
     end
 
     context 'when partition_keys consists of mixed types' do
@@ -213,10 +233,37 @@ describe RedisCounters::HashCounter do
       before { value.times { counter.process(:param1 => 11, :param2 => 22, :param3 => 33) } }
       before { 3.times { counter.process(:param1 => 21, :param2 => 22, :param3 => 33) } }
       before { 2.times { counter.process(:param1 => 21, :param2 => 23, :param3 => 31) } }
+      before { 1.times { counter.process(:param1 => 21, :param2 => nil, :param3 => 31) } }
+      before { 4.times { counter.process(:param1 => 21, :param2 => '', :param3 => 31) } }
 
-      it { expect(counter.data(partitions)).to have(2).row }
+      it { expect(counter.data(partitions)).to have(3).row }
       it { expect(counter.data(partitions).first[:value]).to eq 3 }
       it { expect(counter.data(partitions).second[:value]).to eq 2 }
+      it { expect(counter.data(partitions).third[:value]).to eq 5 }
+    end
+
+    context 'when group_keys and one group key is nil' do
+      let(:options) { {
+          :counter_name   => :test_counter,
+          :field_name     => :test_field,
+          :partition_keys => [:param1, :param2],
+          :group_keys     => [:param3, :param4]
+      } }
+
+      let(:partitions) { {:param1 => 21, 'param3' => 33, :param2 => nil} }
+
+      before { 1.times { counter.process(:param1 => 21, :param2 => nil, :param3 => 31, :param4 => 1) } }
+      before { 4.times { counter.process(:param1 => 21, :param2 => '', :param3 => 31, :param4 => nil) } }
+      before { 1.times { counter.process(:param1 => 21, :param2 => nil, :param3 => 31, :param4 => '') } }
+      before { 3.times { counter.process(:param1 => 21, :param2 => '', :param3 => 31, :param4 => 1) } }
+
+      it { expect(counter.data(partitions)).to have(2).row }
+      it { expect(counter.data(partitions).first[:value]).to eq 4 }
+      it { expect(counter.data(partitions).first[:param3]).to eq '31' }
+      it { expect(counter.data(partitions).first[:param4]).to eq '1' }
+      it { expect(counter.data(partitions).second[:value]).to eq 5 }
+      it { expect(counter.data(partitions).second[:param3]).to eq '31' }
+      it { expect(counter.data(partitions).second[:param4]).to eq '' }
     end
 
     context 'when group_keys given' do
@@ -230,6 +277,8 @@ describe RedisCounters::HashCounter do
       before { value.times { counter.process(:param1 => 11, :param2 => 22, :param3 => 33) } }
       before { 3.times { counter.process(:param1 => 21, :param2 => 22, :param3 => 33) } }
       before { 2.times { counter.process(:param1 => 21, :param2 => 22, :param3 => 31) } }
+      before { 1.times { counter.process(:param1 => 21, :param2 => nil, :param3 => 31) } }
+      before { 4.times { counter.process(:param1 => 21, :param2 => '', :param3 => 31) } }
 
       context 'when partition as Hash_given' do
         let(:partitions) { {:param1 => 21, 'param3' => 33, :param2 => 22} }
@@ -244,6 +293,22 @@ describe RedisCounters::HashCounter do
         it { expect(counter.data(partitions).first[:param3]).to eq '33' }
         it { expect(counter.data(partitions).second[:value]).to eq 2 }
         it { expect(counter.data(partitions).second[:param3]).to eq '31' }
+      end
+
+      context 'when partition param is empty string' do
+        let(:partitions) { {:param1 => 21, 'param3' => 33, :param2 => ''} }
+
+        it { expect(counter.data(partitions)).to have(1).row }
+        it { expect(counter.data(partitions).first[:value]).to eq 5 }
+        it { expect(counter.data(partitions).first[:param3]).to eq '31' }
+      end
+
+      context 'when partition param is empty nil' do
+        let(:partitions) { {:param1 => 21, 'param3' => 33, :param2 => nil} }
+
+        it { expect(counter.data(partitions)).to have(1).row }
+        it { expect(counter.data(partitions).first[:value]).to eq 5 }
+        it { expect(counter.data(partitions).first[:param3]).to eq '31' }
       end
 
       context 'when few partition_given' do

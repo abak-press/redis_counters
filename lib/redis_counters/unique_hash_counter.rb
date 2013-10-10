@@ -10,17 +10,13 @@ module RedisCounters
 
     UNIQUE_LIST_POSTFIX_DELIMITER = '_'.freeze
 
-    class_attribute :unique_list_postfix_delimiter
-
-    self.unique_list_postfix_delimiter = UNIQUE_LIST_POSTFIX_DELIMITER
+    attr_reader :unique_values_list
 
     protected
 
     def process_value
       unique_values_list.add(params) { super }
     end
-
-    attr_reader :unique_values_list
 
     def init
       super
@@ -43,7 +39,12 @@ module RedisCounters
     end
 
     def unique_list_postfix_delimiter
-      @unique_list_postfix_delimiter ||= options.fetch(:unique_list_postfix_delimiter, self.class.unique_list_postfix_delimiter)
+      @unique_list_postfix_delimiter ||= options.fetch(:unique_list_postfix_delimiter, UNIQUE_LIST_POSTFIX_DELIMITER)
+    end
+
+    def partitions_raw(parts = {})
+      # удаляем из списка партиций, ключи в которых хранятся списки уникальных значений
+      super.delete_if { |partition| partition.start_with?(unique_values_list_name) }
     end
   end
 

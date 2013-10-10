@@ -20,9 +20,9 @@ module RedisCounters
     def partitions(parts = {})
       partitions_raw(parts).map do |part|
         # parse and exclude counter_name
-        part = part.split(key_delimiter).from(1)
+        part = part.split(key_delimiter, -1).from(1)
         # construct hash
-        HashWithIndifferentAccess[partition_keys.zip(part)]
+        Hash[partition_keys.zip(part)].with_indifferent_access
       end
     end
 
@@ -38,12 +38,8 @@ module RedisCounters
     # Returns Array Of Hash.
     #
     def data(parts = {})
-      # получаем все подпартиции
       parts = partitions(parts)
-      # подгатавливаем в необходимом виде
-      parts = prepared_parts(parts)
-
-      parts.flat_map do |partition|
+      prepared_parts(parts).flat_map do |partition|
         rows = partition_data(partition)
         block_given? ? yield(rows) : rows
       end
@@ -88,7 +84,7 @@ module RedisCounters
     # Returns Nothing.
     #
     def delete_partition_direct!(partition, write_session = redis)
-      partition = prepared_parts(partition, true)
+      partition = prepared_parts(partition, :only_leaf => true)
       key = key(partition)
       write_session.del(key)
     end
@@ -131,9 +127,7 @@ module RedisCounters
       @partition_keys ||= Array.wrap(options.fetch(:partition_keys, []))
     end
 
-    # Public: Возвращает массив партиций (подпартиций) в виде ключей.
-    #
-    # Если партиция не указана, возвращает все партиции.
+    # Protected: Возвращает массив листовых партиций в виде ключей.
     #
     # parts - Array of Hash - список партиций (опционально).
     #         По умолчанию, выбираются все данные.
@@ -141,20 +135,38 @@ module RedisCounters
     # Returns Array of Hash.
     #
     def partitions_raw(parts = {})
-      prepared_parts(parts).flat_map do |partition|
+      prepared_parts(parts).inject(Array.new) do |result, partition|
         strict_pattern = key(partition)
         fuzzy_pattern = key(partition << '*')
-        redis.keys(strict_pattern) | redis.keys(fuzzy_pattern)
+        result |= redis.keys(strict_pattern) if strict_pattern.present?
+        result |= redis.keys(fuzzy_pattern) if fuzzy_pattern.present?
+        result
       end
-        .uniq
     end
 
-    def prepared_parts(parts, only_leaf = false)
+    # Protected: Возвращает массив партиций, где каждая партиция,
+    # представляет собой массив параметров, однозначно её идентифицирующих.
+    #
+    # parts   - Array of Hash - список партиций.
+    # options - Hash - хеш опций:
+    #           :only_leaf - Boolean - выбирать только листовые партиции (по умолачнию - false).
+    #                        Если флаг установлен в true и передана не листовая партиция, то
+    #                        будет сгенерировано исключение KeyError.
+    #
+    # Метод генерирует исключение ArgumentError, если переданы параметры не верно идентифицирующие партицию.
+    # Например: ключи партиционирования счетчика {:param1, :param2, :param3}, а переданы {:param1, :param3}.
+    #
+    # Returns Array of Array.
+    #
+    def prepared_parts(parts, options = {})
+      default_options = {:only_leaf => false}
+      options.reverse_merge!(default_options)
+
       parts = Array.wrap(parts).map(&:with_indifferent_access)
       parts.map do |partition|
         partition_keys.inject(Array.new) do |result, key|
-          param = (only_leaf ? partition.fetch(key) : partition[key])
-          next result if param.nil?
+          param = (options[:only_leaf] ? partition.fetch(key) : partition[key])
+          next result unless partition.has_key?(key)
           next result << param if result.size >= partition_keys.index(key)
 
           raise ArgumentError, 'An incorrectly specified partition %s' % [partition]
@@ -162,12 +174,21 @@ module RedisCounters
       end
     end
 
+    # Protected: Возвращает данные партиции в виде массива хешей.
+    #
+    # Каждый элемент массива, представлен в виде хеша, содержащего все параметры группировки и
+    # значение счетчика в ключе :value.
+    #
+    # partition - Array - листовая партиция - массив параметров однозначно идентифицирующий партицию.
+    #
+    # Returns Array of WithIndifferentAccess.
+    #
     def partition_data(partition)
       keys = group_keys.dup << :value
       redis.hgetall(key(partition)).inject(Array.new) do |result, (key, value)|
-        values = key.split(value_delimiter) << value.to_i
+        values = key.split(value_delimiter, -1) << value.to_i
         values = values.from(1) unless group_keys.present?
-        result << HashWithIndifferentAccess[keys.zip(values)]
+        result << Hash[keys.zip(values)].with_indifferent_access
       end
     end
   end
