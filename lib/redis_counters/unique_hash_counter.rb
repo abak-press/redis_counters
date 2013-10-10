@@ -8,6 +8,12 @@ module RedisCounters
   class UniqueHashCounter < HashCounter
     UNIQUE_LIST_POSTFIX = 'uq'.freeze
 
+    UNIQUE_LIST_POSTFIX_DELIMITER = '_'.freeze
+
+    class_attribute :unique_list_postfix_delimiter
+
+    self.unique_list_postfix_delimiter = UNIQUE_LIST_POSTFIX_DELIMITER
+
     protected
 
     def process_value
@@ -29,11 +35,15 @@ module RedisCounters
     end
 
     def unique_values_list_name
-      [counter_name, UNIQUE_LIST_POSTFIX].join(key_delimiter)
+      [counter_name, UNIQUE_LIST_POSTFIX].join(unique_list_postfix_delimiter)
     end
 
     def unique_values_list_class
       unique_values_list_options.fetch(:list_class).to_s.constantize
+    end
+
+    def unique_list_postfix_delimiter
+      @unique_list_postfix_delimiter ||= options.fetch(:unique_list_postfix_delimiter, self.class.unique_list_postfix_delimiter)
     end
   end
 
