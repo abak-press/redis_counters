@@ -360,7 +360,9 @@ describe RedisCounters::HashCounter do
           ]
         end
 
+        it { expect(counter.data(partitions) {}).to eq 3 }
         it { expect { |b| counter.data(partitions, &b) }.to yield_control.twice }
+
         it do
           expect { |b| counter.data(partitions, &b) }.to(
             yield_successive_args(

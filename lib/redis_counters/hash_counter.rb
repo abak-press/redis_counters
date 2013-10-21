@@ -35,14 +35,19 @@ module RedisCounters
     # Если блок, не передн, то аккумулирует данные,
     # из всех запрошенных партиций, и затем возвращает их.
     #
-    # Returns Array Of Hash.
+    # Returns Array Of Hash или общее кол-во строк данных, если передан блок.
     #
     def data(parts = {})
+      total_rows = 0
       parts = partitions(parts)
-      prepared_parts(parts).flat_map do |partition|
+
+      result = prepared_parts(parts).flat_map do |partition|
         rows = partition_data(partition)
+        total_rows += rows.size
         block_given? ? yield(rows) : rows
       end
+
+      block_given? ? total_rows : result
     end
 
     # Public: Транзакционно удаляет все данные счетчика.
