@@ -1,5 +1,12 @@
 
+v1.0.0
+  - 2013/10/18: feature(unique_values_lists): added methods to read and delete data (Artem Napolskih)
+  - 2013/10/10: feature(unique_hash_counter): introduce unique list postfix delimiter (Artem Napolskih)
+  - 2013/10/10: feature(hash_counter): added methods to read and delete data (Artem Napolskih)
+  - 2013/09/13: docs(all): documenting (Artem Napolskih)
+
 v1.0.0beta1
+  - 2013/09/13: Release 1.0.0beta1 (Artem Napolskih)
   - 2013/09/12: feature(all) introduce key and value delimiters (Artem Napolskih)
   - 2013/09/12: feature(unique_values_list): fast (non blocking) unique values list added (Artem Napolskih)
   - 2013/09/11: Initial commit (Artem Napolskih)
