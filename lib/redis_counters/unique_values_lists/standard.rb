@@ -19,7 +19,7 @@ module RedisCounters
 
       # Public: Нетранзакционно удаляет данные конкретной конечной партиции.
       #
-      # partition     - Hash - партиция.
+      # params        - Hash - хеш параметров, определяющий кластер и партицию.
       # write_session - Redis - соединение с Redis, в рамках которого
       #                 будет производится удаление (опционально).
       #                 По умолчанию - основное соединение счетчика.
@@ -28,18 +28,23 @@ module RedisCounters
       #
       # Returns Nothing.
       #
-      def delete_partition_direct!(group, partition = {}, write_session = redis)
-        super(group, partition, write_session)
+      def delete_partition_direct!(params = {}, write_session = redis)
+        super(params, write_session)
 
         # удаляем партицию из списка
         return unless use_partitions?
-        group = prepared_group(group)
-        partition = prepared_parts(partition, :only_leaf => true)
+        cluster = prepared_cluster(params)
+        partition = prepared_part(params, :only_leaf => true)
         partition = partition.flatten.join(key_delimiter)
-        write_session.lrem(partitions_list_key(group), 0, partition)
+        write_session.lrem(partitions_list_key(cluster), 0, partition)
       end
 
       protected
+
+      def key(partition = partition_params, cluster = cluster_params)
+        return super if use_partitions?
+        [counter_name, cluster, partition].flatten.compact.join(key_delimiter)
+      end
 
       def process_value
         loop do
@@ -88,13 +93,13 @@ module RedisCounters
         redis.sadd(key, value)
       end
 
-      def all_partitions(group = group_params)
+      def all_partitions(cluster = cluster_params)
         return @partitions unless @partitions.nil?
         return (@partitions = [nil]) unless use_partitions?
 
-        @partitions = redis.lrange(partitions_list_key(group), 0, -1)
+        @partitions = redis.lrange(partitions_list_key(cluster), 0, -1)
         @partitions = @partitions.map do |partition|
-          partition.split(key_delimiter)
+          partition.split(key_delimiter, -1)
         end
           .delete_if(&:empty?)
       end
@@ -105,8 +110,8 @@ module RedisCounters
         redis.rpush(partitions_list_key, current_partition)
       end
 
-      def partitions_list_key(group = group_params)
-        [counter_name, group, PARTITIONS_LIST_POSTFIX].flatten.join(key_delimiter)
+      def partitions_list_key(cluster = cluster_params)
+        [counter_name, cluster, PARTITIONS_LIST_POSTFIX].flatten.join(key_delimiter)
       end
 
       def current_partition
@@ -120,27 +125,25 @@ module RedisCounters
 
       # Protected: Возвращает массив листовых партиций в виде ключей.
       #
-      # Если группа не указана и нет группировки в счетчике, то возвращает все партиции.
-      # Если партиция не указана, возвращает все партиции группы (все партиции, если нет группировки).
+      # Если кластер не указан и нет кластеризации в счетчике, то возвращает все партиции.
+      # Если партиция не указана, возвращает все партиции кластера (все партиции, если нет кластеризации).
       #
-      # group - Hash - группа.
-      # parts - Array of Hash - список партиций.
+      # params  - Hash - хеш параметров, определяющий кластер и партицию.
+      # parts   - Array of Hash - список партиций.
       #
       # Returns Array of Hash.
       #
-      def partitions_raw(group = {}, parts = {})
+      def partitions_keys(params = {})
         reset_partitions_cache
-        group = prepared_group(group)
-        partitions_keys = all_partitions(group).map { |partition| key(partition, group) }
 
-        prepared_parts(parts).flat_map do |partition|
-          strict_pattern = key(partition, group) if (group.present? && partition_keys.blank?) || partition.present?
-          fuzzy_pattern = key(partition << '', group)
-          partitions_keys.select { |part| part.eql?(strict_pattern) } |
-            partitions_keys.select { |part| part.start_with?(fuzzy_pattern) }
-        end.uniq
+        cluster = prepared_cluster(params)
+        partition = prepared_part(params)
+
+        partitions_keys = all_partitions(cluster).map { |part| key(part, cluster) }
+
+        fuzzy_pattern = key(partition, cluster)
+        partitions_keys.select { |part| part.start_with?(fuzzy_pattern) }
       end
     end
-
   end
 end

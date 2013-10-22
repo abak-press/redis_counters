@@ -20,7 +20,7 @@ describe RedisCounters::UniqueHashCounter do
         :unique_list  => {
             :list_class => RedisCounters::UniqueValuesLists::Fast,
             :value_keys => [:sid],
-            :group_keys => [:p1],
+            :cluster_keys => [:p1],
             :partition_keys => [:p2]
         }
     } }
@@ -51,7 +51,7 @@ describe RedisCounters::UniqueHashCounter do
         :unique_list  => {
           :list_class => RedisCounters::UniqueValuesLists::Standard,
           :value_keys => [:sid],
-          :group_keys => [:param2],
+          :cluster_keys => [:param2],
           :partition_keys => [:date]
         }
     } }
