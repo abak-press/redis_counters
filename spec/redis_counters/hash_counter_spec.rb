@@ -188,35 +188,35 @@ describe RedisCounters::HashCounter do
     end
 
     context 'when one partition param given' do
-      it { expect(counter.partitions(:param1 => 11)).to have(1).partition }
-      it { expect(counter.partitions(:param1 => 11).first).to eq partition_1 }
-      it { expect(counter.partitions(:param1 => 21)).to have(2).partition }
-      it { expect(counter.partitions(:param1 => 21).first).to eq partition_2 }
-      it { expect(counter.partitions('param1' => 21).second).to eq partition_3 }
+      it { expect(counter.partitions({}, :param1 => 11)).to have(1).partition }
+      it { expect(counter.partitions({}, :param1 => 11).first).to eq partition_1 }
+      it { expect(counter.partitions({}, :param1 => 21)).to have(2).partition }
+      it { expect(counter.partitions({}, :param1 => 21).first).to eq partition_2 }
+      it { expect(counter.partitions({}, 'param1' => 21).second).to eq partition_3 }
     end
 
     context 'when two partition params given' do
-      it { expect(counter.partitions(:param1 => 21, :param2 => 23)).to have(1).partition }
-      it { expect(counter.partitions(:param1 => 21, :param2 => 23).first).to eq partition_2 }
+      it { expect(counter.partitions({}, :param1 => 21, :param2 => 23)).to have(1).partition }
+      it { expect(counter.partitions({}, :param1 => 21, :param2 => 23).first).to eq partition_2 }
     end
 
     context 'when all partition params given' do
-      it { expect(counter.partitions(partition_2)).to have(1).partition }
-      it { expect(counter.partitions(partition_2).first).to eq partition_2 }
+      it { expect(counter.partitions({}, partition_2)).to have(1).partition }
+      it { expect(counter.partitions({}, partition_2).first).to eq partition_2 }
     end
 
     context 'when unknown partition params given' do
-      it { expect(counter.partitions(:param1 => 55)).to eq [] }
+      it { expect(counter.partitions({}, :param1 => 55)).to eq [] }
     end
 
     context 'when given an incorrect partition' do
-      it { expect { counter.partitions(:param2 => 55) }.to raise_error ArgumentError }
+      it { expect { counter.partitions({}, :param2 => 55) }.to raise_error ArgumentError }
     end
 
     context 'when array of partitions given' do
-      it { expect(counter.partitions([{:param1 => 11}, partition_2])).to have(2).partition }
-      it { expect(counter.partitions([{:param1 => 11}, partition_2]).first).to eq partition_1 }
-      it { expect(counter.partitions([{:param1 => 11}, partition_2]).second).to eq partition_2 }
+      it { expect(counter.partitions({}, [{:param1 => 11}, partition_2])).to have(2).partition }
+      it { expect(counter.partitions({}, [{:param1 => 11}, partition_2]).first).to eq partition_1 }
+      it { expect(counter.partitions({}, [{:param1 => 11}, partition_2]).second).to eq partition_2 }
     end
   end
 
@@ -236,10 +236,10 @@ describe RedisCounters::HashCounter do
       before { 1.times { counter.process(:param1 => 21, :param2 => nil, :param3 => 31) } }
       before { 4.times { counter.process(:param1 => 21, :param2 => '', :param3 => 31) } }
 
-      it { expect(counter.data(partitions)).to have(3).row }
-      it { expect(counter.data(partitions).first[:value]).to eq 3 }
-      it { expect(counter.data(partitions).second[:value]).to eq 2 }
-      it { expect(counter.data(partitions).third[:value]).to eq 5 }
+      it { expect(counter.data({}, partitions)).to have(3).row }
+      it { expect(counter.data({}, partitions).first[:value]).to eq 3 }
+      it { expect(counter.data({}, partitions).second[:value]).to eq 2 }
+      it { expect(counter.data({}, partitions).third[:value]).to eq 5 }
     end
 
     context 'when group_keys and one group key is nil' do
@@ -283,32 +283,32 @@ describe RedisCounters::HashCounter do
       context 'when partition as Hash_given' do
         let(:partitions) { {:param1 => 21, 'param3' => 33, :param2 => 22} }
 
-        it { expect(counter.data(partitions)).to be_a Array }
-        it { expect(counter.data(partitions)).to have(2).row }
-        it { expect(counter.data(partitions).first).to be_a HashWithIndifferentAccess }
-        it { expect(counter.data(partitions).first).to include('value') }
-        it { expect(counter.data(partitions).first).to include(:value) }
-        it { expect(counter.data(partitions).first).to include(:param3) }
-        it { expect(counter.data(partitions).first[:value]).to eq 3 }
-        it { expect(counter.data(partitions).first[:param3]).to eq '33' }
-        it { expect(counter.data(partitions).second[:value]).to eq 2 }
-        it { expect(counter.data(partitions).second[:param3]).to eq '31' }
+        it { expect(counter.data({}, partitions)).to be_a Array }
+        it { expect(counter.data({}, partitions)).to have(2).row }
+        it { expect(counter.data({}, partitions).first).to be_a HashWithIndifferentAccess }
+        it { expect(counter.data({}, partitions).first).to include('value') }
+        it { expect(counter.data({}, partitions).first).to include(:value) }
+        it { expect(counter.data({}, partitions).first).to include(:param3) }
+        it { expect(counter.data({}, partitions).first[:value]).to eq 3 }
+        it { expect(counter.data({}, partitions).first[:param3]).to eq '33' }
+        it { expect(counter.data({}, partitions).second[:value]).to eq 2 }
+        it { expect(counter.data({}, partitions).second[:param3]).to eq '31' }
       end
 
       context 'when partition param is empty string' do
         let(:partitions) { {:param1 => 21, 'param3' => 33, :param2 => ''} }
 
-        it { expect(counter.data(partitions)).to have(1).row }
-        it { expect(counter.data(partitions).first[:value]).to eq 5 }
-        it { expect(counter.data(partitions).first[:param3]).to eq '31' }
+        it { expect(counter.data({}, partitions)).to have(1).row }
+        it { expect(counter.data({}, partitions).first[:value]).to eq 5 }
+        it { expect(counter.data({}, partitions).first[:param3]).to eq '31' }
       end
 
       context 'when partition param is empty nil' do
         let(:partitions) { {:param1 => 21, 'param3' => 33, :param2 => nil} }
 
-        it { expect(counter.data(partitions)).to have(1).row }
-        it { expect(counter.data(partitions).first[:value]).to eq 5 }
-        it { expect(counter.data(partitions).first[:param3]).to eq '31' }
+        it { expect(counter.data({}, partitions)).to have(1).row }
+        it { expect(counter.data({}, partitions).first[:value]).to eq 5 }
+        it { expect(counter.data({}, partitions).first[:param3]).to eq '31' }
       end
 
       context 'when few partition_given' do
@@ -319,14 +319,14 @@ describe RedisCounters::HashCounter do
           ]
         end
 
-        it { expect(counter.data(partitions)).to be_a Array }
-        it { expect(counter.data(partitions)).to have(3).row }
-        it { expect(counter.data(partitions).first).to be_a HashWithIndifferentAccess }
-        it { expect(counter.data(partitions).first).to include('value') }
-        it { expect(counter.data(partitions).first).to include(:value) }
-        it { expect(counter.data(partitions).first[:value]).to eq 3 }
-        it { expect(counter.data(partitions).second[:value]).to eq 2 }
-        it { expect(counter.data(partitions).third[:'value']).to eq value }
+        it { expect(counter.data({}, partitions)).to be_a Array }
+        it { expect(counter.data({}, partitions)).to have(3).row }
+        it { expect(counter.data({}, partitions).first).to be_a HashWithIndifferentAccess }
+        it { expect(counter.data({}, partitions).first).to include('value') }
+        it { expect(counter.data({}, partitions).first).to include(:value) }
+        it { expect(counter.data({}, partitions).first[:value]).to eq 3 }
+        it { expect(counter.data({}, partitions).second[:value]).to eq 2 }
+        it { expect(counter.data({}, partitions).third[:'value']).to eq value }
       end
 
       context 'when unknown partition_given' do
@@ -337,9 +337,9 @@ describe RedisCounters::HashCounter do
           ]
         end
 
-        it { expect(counter.data(partitions)).to have(1).row }
-        it { expect(counter.data(partitions).first[:value]).to eq value }
-        it { expect(counter.data(partitions).first[:param3]).to eq '33' }
+        it { expect(counter.data({}, partitions)).to have(1).row }
+        it { expect(counter.data({}, partitions).first[:value]).to eq value }
+        it { expect(counter.data({}, partitions).first[:param3]).to eq '33' }
       end
 
       context 'when no data in storage' do
@@ -347,8 +347,8 @@ describe RedisCounters::HashCounter do
 
         before { redis.flushdb }
 
-        it { expect(counter.data(partitions)).to be_a Array }
-        it { expect(counter.data(partitions)).to be_empty }
+        it { expect(counter.data({}, partitions)).to be_a Array }
+        it { expect(counter.data({}, partitions)).to be_empty }
       end
 
 
@@ -360,11 +360,11 @@ describe RedisCounters::HashCounter do
           ]
         end
 
-        it { expect(counter.data(partitions) {}).to eq 3 }
-        it { expect { |b| counter.data(partitions, &b) }.to yield_control.twice }
+        it { expect(counter.data({}, partitions) {}).to eq 3 }
+        it { expect { |b| counter.data({}, partitions, &b) }.to yield_control.twice }
 
         it do
-          expect { |b| counter.data(partitions, &b) }.to(
+          expect { |b| counter.data({}, partitions, &b) }.to(
             yield_successive_args(
               [{'param3' => '33', 'value' => 3}, {'param3' => '31', 'value' => 2}],
               [{'param3'=>'33', 'value'=>value}]
@@ -400,7 +400,7 @@ describe RedisCounters::HashCounter do
 
     context '#delete_partitions!' do
       context 'when leaf partition given' do
-        before { counter.delete_partitions!(partition_2) }
+        before { counter.delete_partitions!({}, partition_2) }
 
         it { expect(counter.partitions).to have(2).row }
         it { expect(counter.partitions.first).to eq partition_1 }
@@ -408,20 +408,20 @@ describe RedisCounters::HashCounter do
       end
 
       context 'when not leaf partition given' do
-        before { counter.delete_partitions!(:param1 => 21) }
+        before { counter.delete_partitions!({}, :param1 => 21) }
 
         it { expect(counter.partitions).to have(1).row }
         it { expect(counter.partitions.first).to eq partition_1 }
       end
 
       context 'when block given' do
-        it { expect { |b| counter.delete_partitions!(:param1 => 21, &b) }.to yield_control.once }
+        it { expect { |b| counter.delete_partitions!({}, :param1 => 21, &b) }.to yield_control.once }
       end
 
       context 'if you pass a block in which the exception occurred' do
         let(:error_proc) { Proc.new { raise '!' } }
 
-        before { counter.delete_partitions!(:param1 => 21, &error_proc) rescue nil }
+        before { counter.delete_partitions!({}, :param1 => 21, &error_proc) rescue nil }
 
         it { expect(counter.partitions).to have(3).row }
         it { expect(counter.partitions.first).to eq partition_1 }
@@ -432,7 +432,7 @@ describe RedisCounters::HashCounter do
 
     context '#delete_partition_direct!' do
       context 'when leaf partition given' do
-        before { counter.delete_partitions!(partition_2) }
+        before { counter.delete_partitions!({}, partition_2) }
 
         it { expect(counter.partitions).to have(2).row }
         it { expect(counter.partitions.first).to eq partition_1 }
@@ -440,7 +440,7 @@ describe RedisCounters::HashCounter do
       end
 
       context 'when not leaf partition given' do
-        it { expect { counter.delete_partition_direct!(:param1 => 21) }.to raise_error KeyError }
+        it { expect { counter.delete_partition_direct!({}, :param1 => 21) }.to raise_error KeyError }
       end
     end
   end

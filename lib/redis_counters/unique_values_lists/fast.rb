@@ -19,30 +19,30 @@ module RedisCounters
 
       # Public: Нетранзакционно удаляет все данные счетчика.
       #
-      # group         - Hash - группа.
+      # cluster       - Hash - кластер.
       # write_session - Redis - соединение с Redis, в рамках которого
       #                 будет производится удаление (опционально).
       #                 По умолчанию - основное соединение счетчика.
       #
       # Returns Nothing.
       #
-      def delete_all_direct!(group, write_session = redis, parts = partitions(group))
-        super(group, write_session, parts)
-        delete_main_partition!(group, write_session)
+      def delete_all_direct!(cluster, write_session = redis, parts = partitions(cluster))
+        super(cluster, write_session, parts)
+        delete_main_partition!(cluster, write_session)
       end
 
       # Public: Удаляет основную партицию.
       #
-      # group         - Hash - группа.
+      # cluster       - Hash - кластре.
       # write_session - Redis - соединение с Redis, в рамках которого
       #                 будет производится удаление (опционально).
       #                 По умолчанию - основное соединение счетчика.
       #
       # Returns Nothing.
       #
-      def delete_main_partition!(group, write_session = redis)
-        group = prepared_group(group)
-        key = key([], group)
+      def delete_main_partition!(cluster, write_session = redis)
+        cluster = prepared_cluster(cluster)
+        key = key([], cluster)
         write_session.del(key)
       end
 
@@ -66,27 +66,6 @@ module RedisCounters
 
       def current_partition_key
         key
-      end
-
-      # Protected: Возвращает массив листовых партиций в виде ключей.
-      #
-      # Если группа не указана и нет группировки в счетчике, то возвращает все партиции.
-      # Если партиция не указана, возвращает все партиции группы (все партиции, если нет группировки).
-      #
-      # group - Hash - группа.
-      # parts - Array of Hash - список партиций.
-      #
-      # Returns Array of Hash.
-      #
-      def partitions_raw(group = {}, parts = {})
-        group = prepared_group(group)
-        prepared_parts(parts).inject(Array.new) do |result, partition|
-          strict_pattern = key(partition, group) if (group.present? && partition_keys.blank?) || partition.present?
-          fuzzy_pattern = key(partition << '*', group)
-          result |= redis.keys(strict_pattern) if strict_pattern.present?
-          result |= redis.keys(fuzzy_pattern) if fuzzy_pattern.present?
-          result
-        end
       end
     end
 
