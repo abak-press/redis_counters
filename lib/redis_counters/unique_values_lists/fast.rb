@@ -12,24 +12,9 @@ module RedisCounters
     #   * Не транзакционен.
     #   * Методы delete_partitions! и delete_partition_direct!, удаляют только дублирующие партиции,
     #     но не удаляют данные из основной партиции.
-    #     Для удаления основной партиции необходимо вызвать delete_main_partition!,
-    #     либо воспользоваться методом delete_all!
+    #     Для удаления основной партиции необходимо вызвать delete_main_partition!
 
     class Fast < UniqueValuesLists::Base
-
-      # Public: Нетранзакционно удаляет все данные счетчика.
-      #
-      # cluster       - Hash - кластер.
-      # write_session - Redis - соединение с Redis, в рамках которого
-      #                 будет производится удаление (опционально).
-      #                 По умолчанию - основное соединение счетчика.
-      #
-      # Returns Nothing.
-      #
-      def delete_all_direct!(cluster, write_session = redis, parts = partitions(cluster))
-        super(cluster, write_session, parts)
-        delete_main_partition!(cluster, write_session)
-      end
 
       # Public: Удаляет основную партицию.
       #

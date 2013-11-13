@@ -42,7 +42,7 @@ module RedisCounters
       @unique_list_postfix_delimiter ||= options.fetch(:unique_list_postfix_delimiter, UNIQUE_LIST_POSTFIX_DELIMITER)
     end
 
-    def partitions_raw(cluster = {}, parts = {})
+    def partitions_raw(params = {})
       # удаляем из списка партиций, ключи в которых хранятся списки уникальных значений
       super.delete_if { |partition| partition.start_with?(unique_values_list_name) }
     end

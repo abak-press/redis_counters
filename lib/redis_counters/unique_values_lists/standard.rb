@@ -28,13 +28,13 @@ module RedisCounters
       #
       # Returns Nothing.
       #
-      def delete_partition_direct!(cluster, partition = {}, write_session = redis)
-        super(cluster, partition, write_session)
+      def delete_partition_direct!(params = {}, write_session = redis)
+        super(params, write_session)
 
         # удаляем партицию из списка
         return unless use_partitions?
-        cluster = prepared_cluster(cluster)
-        partition = prepared_parts(partition, :only_leaf => true)
+        cluster = prepared_cluster(params)
+        partition = prepared_parts(params, :only_leaf => true)
         partition = partition.flatten.join(key_delimiter)
         write_session.lrem(partitions_list_key(cluster), 0, partition)
       end
@@ -133,13 +133,12 @@ module RedisCounters
       #
       # Returns Array of Hash.
       #
-      def partitions_raw(cluster = {}, parts = {})
-        params = cluster.merge(parts)
+      def partitions_raw(params = {})
         reset_partitions_cache
         cluster = prepared_cluster(params)
+        partition = prepared_parts(params)
         partitions_keys = all_partitions(cluster).map { |partition| key(partition, cluster) }
 
-        partition = prepared_parts(params)
         strict_pattern = key(partition, cluster) if (cluster.present? && partition_keys.blank?) || partition.present?
         fuzzy_pattern = key(partition << '', cluster)
         partitions_keys.select { |part| part.eql?(strict_pattern) } |

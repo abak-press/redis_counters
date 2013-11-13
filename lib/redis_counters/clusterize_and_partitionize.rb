@@ -11,8 +11,8 @@ module RedisCounters
     #
     # Returns Array Of Hash.
     #
-    def partitions(cluster = {}, parts = {})
-      partitions_raw(cluster, parts).map do |part|
+    def partitions(params = {})
+      partitions_raw(params).map do |part|
         # parse and exclude counter_name and cluster
         part = part.split(key_delimiter, -1).from(1).from(cluster_keys.size)
         # construct hash
@@ -32,11 +32,10 @@ module RedisCounters
     #
     # Returns Array Of Hash.
     #
-    def data(cluster = {}, parts = {})
+    def data(params = {})
       total_rows = 0
-      params = cluster.merge(parts)
-      parts = partitions(cluster, parts).map { |partition| prepared_parts(partition) }
       cluster = prepared_cluster(params)
+      parts = partitions(params).map { |partition| prepared_parts(partition) }
 
       result = parts.flat_map do |partition|
         rows = partition_data(cluster, partition)
@@ -47,22 +46,6 @@ module RedisCounters
       block_given? ? total_rows : result
     end
 
-    # Public: Транзакционно удаляет все данные счетчика.
-    #
-    # cluster - Hash - кластер (опционально, если не используются кластеризация).
-    #
-    # Если передан блок, то вызывает блок, после удаления всех данных, в транзакции.
-    #
-    # Returns Nothing.
-    #
-    def delete_all!(cluster = {})
-      parts = partitions(cluster)
-      transaction do
-        delete_all_direct!(cluster, redis, parts)
-        yield if block_given?
-      end
-    end
-
     # Public: Транзакционно удаляет данные всех указанных партиций.
     #
     # parts - Array of Hash - список партиций.
@@ -71,30 +54,13 @@ module RedisCounters
     #
     # Returns Nothing.
     #
-    def delete_partitions!(cluster, parts)
-      if parts.blank?
-        raise ArgumentError, 'You must specify a partitions'
-      end
-
-      parts = partitions(cluster, parts)
+    def delete_partitions!(params = {})
+      parts = partitions(params)
 
       transaction do
-        parts.each { |partition| delete_partition_direct!(cluster, partition) }
+        parts.each { |partition| delete_partition_direct!(params.merge(partition)) }
         yield if block_given?
       end
-    end
-
-    # Public: Нетранзакционно удаляет все данные счетчика.
-    #
-    # cluster       - Hash - кластер.
-    # write_session - Redis - соединение с Redis, в рамках которого
-    #                 будет производится удаление (опционально).
-    #                 По умолчанию - основное соединение счетчика.
-    #
-    # Returns Nothing.
-    #
-    def delete_all_direct!(cluster, write_session = redis, parts = partitions(cluster))
-      parts.each { |partition| delete_partition_direct!(cluster, partition, write_session) }
     end
 
     # Public: Нетранзакционно удаляет данные конкретной конечной партиции.
@@ -107,9 +73,9 @@ module RedisCounters
     #
     # Returns Nothing.
     #
-    def delete_partition_direct!(cluster, partition = {}, write_session = redis)
-      cluster = prepared_cluster(cluster)
-      partition = prepared_parts(partition, :only_leaf => true)
+    def delete_partition_direct!(params = {}, write_session = redis)
+      cluster = prepared_cluster(params)
+      partition = prepared_parts(params, :only_leaf => true)
       key = key(partition, cluster)
       write_session.del(key)
     end
@@ -214,8 +180,7 @@ module RedisCounters
     #
     # Returns Array of Hash.
     #
-    def partitions_raw(cluster = {}, parts = {})
-      params = cluster.merge(parts)
+    def partitions_raw(params = {})
       cluster = prepared_cluster(params)
       partition = prepared_parts(params)
       strict_pattern = key(partition, cluster) if (cluster.present? && partition_keys.blank?) || partition.present?
