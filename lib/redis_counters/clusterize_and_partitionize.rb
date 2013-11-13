@@ -34,10 +34,11 @@ module RedisCounters
     #
     def data(cluster = {}, parts = {})
       total_rows = 0
-      parts = partitions(cluster, parts)
-      cluster = prepared_cluster(cluster)
+      params = cluster.merge(parts)
+      parts = partitions(cluster, parts).map { |partition| prepared_parts(partition) }
+      cluster = prepared_cluster(params)
 
-      result = prepared_parts(parts).flat_map do |partition|
+      result = parts.flat_map do |partition|
         rows = partition_data(cluster, partition)
         total_rows += rows.size
         block_given? ? yield(rows) : rows
@@ -75,7 +76,7 @@ module RedisCounters
         raise ArgumentError, 'You must specify a partitions'
       end
 
-      parts = Array.wrap(parts).flat_map { |part| partitions(cluster, part) }
+      parts = partitions(cluster, parts)
 
       transaction do
         parts.each { |partition| delete_partition_direct!(cluster, partition) }
@@ -193,15 +194,13 @@ module RedisCounters
       default_options = {:only_leaf => false}
       options.reverse_merge!(default_options)
 
-      parts = Array.wrap(parts).map(&:with_indifferent_access)
-      parts.map do |partition|
-        partition_keys.inject(Array.new) do |result, key|
-          param = (options[:only_leaf] ? partition.fetch(key) : partition[key])
-          next result unless partition.has_key?(key)
-          next result << param if result.size >= partition_keys.index(key)
+      partition = parts.with_indifferent_access
+      partition_keys.inject(Array.new) do |result, key|
+        param = (options[:only_leaf] ? partition.fetch(key) : partition[key])
+        next result unless partition.has_key?(key)
+        next result << param if result.size >= partition_keys.index(key)
 
-          raise ArgumentError, 'An incorrectly specified partition %s' % [partition]
-        end
+        raise ArgumentError, 'An incorrectly specified partition %s' % [partition]
       end
     end
 
@@ -216,14 +215,15 @@ module RedisCounters
     # Returns Array of Hash.
     #
     def partitions_raw(cluster = {}, parts = {})
-      cluster = prepared_cluster(cluster)
-      prepared_parts(parts).inject(Array.new) do |result, partition|
-        strict_pattern = key(partition, cluster) if (cluster.present? && partition_keys.blank?) || partition.present?
-        fuzzy_pattern = key(partition << '*', cluster)
-        result |= redis.keys(strict_pattern) if strict_pattern.present?
-        result |= redis.keys(fuzzy_pattern) if fuzzy_pattern.present?
-        result
-      end
+      params = cluster.merge(parts)
+      cluster = prepared_cluster(params)
+      partition = prepared_parts(params)
+      strict_pattern = key(partition, cluster) if (cluster.present? && partition_keys.blank?) || partition.present?
+      fuzzy_pattern = key(partition << '*', cluster)
+      result = []
+      result |= redis.keys(strict_pattern) if strict_pattern.present?
+      result |= redis.keys(fuzzy_pattern) if fuzzy_pattern.present?
+      result
     end
   end
 end

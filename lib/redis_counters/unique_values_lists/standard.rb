@@ -134,16 +134,16 @@ module RedisCounters
       # Returns Array of Hash.
       #
       def partitions_raw(cluster = {}, parts = {})
+        params = cluster.merge(parts)
         reset_partitions_cache
-        cluster = prepared_cluster(cluster)
+        cluster = prepared_cluster(params)
         partitions_keys = all_partitions(cluster).map { |partition| key(partition, cluster) }
 
-        prepared_parts(parts).flat_map do |partition|
-          strict_pattern = key(partition, cluster) if (cluster.present? && partition_keys.blank?) || partition.present?
-          fuzzy_pattern = key(partition << '', cluster)
-          partitions_keys.select { |part| part.eql?(strict_pattern) } |
-            partitions_keys.select { |part| part.start_with?(fuzzy_pattern) }
-        end.uniq
+        partition = prepared_parts(params)
+        strict_pattern = key(partition, cluster) if (cluster.present? && partition_keys.blank?) || partition.present?
+        fuzzy_pattern = key(partition << '', cluster)
+        partitions_keys.select { |part| part.eql?(strict_pattern) } |
+          partitions_keys.select { |part| part.start_with?(fuzzy_pattern) }
       end
     end
 

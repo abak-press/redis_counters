@@ -212,12 +212,6 @@ describe RedisCounters::HashCounter do
     context 'when given an incorrect partition' do
       it { expect { counter.partitions({}, :param2 => 55) }.to raise_error ArgumentError }
     end
-
-    context 'when array of partitions given' do
-      it { expect(counter.partitions({}, [{:param1 => 11}, partition_2])).to have(2).partition }
-      it { expect(counter.partitions({}, [{:param1 => 11}, partition_2]).first).to eq partition_1 }
-      it { expect(counter.partitions({}, [{:param1 => 11}, partition_2]).second).to eq partition_2 }
-    end
   end
 
   context '#data' do
@@ -311,35 +305,10 @@ describe RedisCounters::HashCounter do
         it { expect(counter.data({}, partitions).first[:param3]).to eq '31' }
       end
 
-      context 'when few partition_given' do
-        let(:partitions) do
-          [
-            {:param1 => 21, :param3 => 33, 'param2' => '22'},
-            {'param1' => '11', :param3 => 33, :param2 => 22}
-          ]
-        end
-
-        it { expect(counter.data({}, partitions)).to be_a Array }
-        it { expect(counter.data({}, partitions)).to have(3).row }
-        it { expect(counter.data({}, partitions).first).to be_a HashWithIndifferentAccess }
-        it { expect(counter.data({}, partitions).first).to include('value') }
-        it { expect(counter.data({}, partitions).first).to include(:value) }
-        it { expect(counter.data({}, partitions).first[:value]).to eq 3 }
-        it { expect(counter.data({}, partitions).second[:value]).to eq 2 }
-        it { expect(counter.data({}, partitions).third[:'value']).to eq value }
-      end
-
       context 'when unknown partition_given' do
-        let(:partitions) do
-          [
-              {:param1 => 22, :param3 => 33, 'param2' => '22'},
-              {'param1' => '11', :param3 => 33, :param2 => 22}
-          ]
-        end
+        let(:partitions) { {:param1 => 22, :param3 => 33, 'param2' => '22'} }
 
-        it { expect(counter.data({}, partitions)).to have(1).row }
-        it { expect(counter.data({}, partitions).first[:value]).to eq value }
-        it { expect(counter.data({}, partitions).first[:param3]).to eq '33' }
+        it { expect(counter.data({}, partitions)).to have(0).row }
       end
 
       context 'when no data in storage' do
@@ -353,22 +322,17 @@ describe RedisCounters::HashCounter do
 
 
       context 'when block given' do
-        let(:partitions) do
-          [
-              {:param1 => 21, :param3 => 33, 'param2' => '22'},
-              {'param1' => '11', :param3 => 33, :param2 => 22}
-          ]
-        end
+        let(:partitions) { {:param1 => 21, :param3 => 33, 'param2' => '22'} }
 
-        it { expect(counter.data({}, partitions) {}).to eq 3 }
-        it { expect { |b| counter.data({}, partitions, &b) }.to yield_control.twice }
+        it { expect(counter.data({}, partitions) {}).to eq 2 }
+        it { expect { |b| counter.data({}, partitions, &b) }.to yield_control.once }
 
         it do
           expect { |b| counter.data({}, partitions, &b) }.to(
-            yield_successive_args(
-              [{'param3' => '33', 'value' => 3}, {'param3' => '31', 'value' => 2}],
-              [{'param3'=>'33', 'value'=>value}]
-            )
+            yield_successive_args([
+              {'param3'=>'33', 'value'=>3},
+              {'param3'=>'31', 'value'=>2}
+            ])
           )
         end
       end

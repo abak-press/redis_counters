@@ -225,7 +225,7 @@ shared_examples_for 'unique_values_lists' do
       end
 
       context 'when not leaf partition given' do
-        it { expect(counter.partitions(cluster1_subcluster1, [{:part => :part1}, {:part => :part1}, {:part => :part13}])).to have(2).partitions }
+        it { expect(counter.partitions(cluster1_subcluster1, {:part => :part1})).to have(2).partitions }
         it { expect(counter.partitions(cluster1_subcluster1, {:part => :part1}).first).to eq part1_subpart1 }
         it { expect(counter.partitions(cluster1_subcluster1, {:part => :part1}).second).to eq part1_subpart2 }
       end
@@ -265,7 +265,7 @@ shared_examples_for 'unique_values_lists' do
       end
 
       context 'when not leaf partition given' do
-        it { expect(counter.partitions({}, [{:part => :part1}, {:part => :part1}, {:part => :part13}])).to have(2).partitions }
+        it { expect(counter.partitions({}, {:part => :part1})).to have(2).partitions }
         it { expect(counter.partitions({}, {:part => :part1}).first).to eq part1_subpart1 }
         it { expect(counter.partitions({}, {:part => :part1}).second).to eq part1_subpart2 }
       end
@@ -362,7 +362,7 @@ shared_examples_for 'unique_values_lists' do
       end
 
       context 'when not leaf partition given' do
-        it { expect(counter.data(cluster1_subcluster1, [{:part => :part1}, {:part => :part1}, {:part => :part13}])).to have(3).rows }
+        it { expect(counter.data(cluster1_subcluster1, {:part => :part1})).to have(3).rows }
         it { expect(counter.data(cluster1_subcluster1, {:part => :part1})).to include ({'param0' => '1', 'param1' => '2'}) }
         it { expect(counter.data(cluster1_subcluster1, {:part => :part1})).to include ({'param0' => '1', 'param1' => '3'}) }
         it { expect(counter.data(cluster1_subcluster1, {:part => :part1})).to include ({'param0' => '3', 'param1' => '4'}) }
@@ -405,7 +405,7 @@ shared_examples_for 'unique_values_lists' do
       end
 
       context 'when not leaf partition given' do
-        it { expect(counter.data({}, [{:part => :part1}, {:part => :part1}, {:part => :part13}])).to have(3).rows }
+        it { expect(counter.data({}, {:part => :part1})).to have(3).rows }
         it { expect(counter.data({}, {:part => :part1})).to include ({'param0' => '1', 'param1' => '2'}) }
         it { expect(counter.data({}, {:part => :part1})).to include ({'param0' => '1', 'param1' => '3'}) }
         it { expect(counter.data({}, {:part => :part1})).to include ({'param0' => '3', 'param1' => '4'}) }
@@ -496,7 +496,7 @@ shared_examples_for 'unique_values_lists' do
       end
 
       context 'when not leaf partition given' do
-        before { counter.delete_partitions!(cluster1_subcluster1, [{:part => :part1}, {:part => :part1}, {:part => :part13}]) }
+        before { counter.delete_partitions!(cluster1_subcluster1, {:part => :part1}) }
 
         it { expect(counter.partitions(cluster1_subcluster1, :part => :part1)).to have(0).rows }
 
