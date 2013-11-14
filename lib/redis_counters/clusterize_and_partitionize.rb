@@ -5,9 +5,10 @@ module RedisCounters
     #
     # Если партиция не указана, возвращает все партиции кластера.
     #
-    # cluster - Hash - кластер (опционально, если не используются кластеризация).
-    # parts   - Array of Hash - список партиций (опционально).
-    #           По умолчанию, выбираются все данные кластера.
+    # params - Hash - параметров, определяющий кластер и партицию.
+    #
+    # Партиция может быть не задана, тогда будут возвращены все партиции кластера.
+    # Может быть задана не листовая партиция, тогда будут все её листовые подпартции.
     #
     # Returns Array Of Hash.
     #
@@ -22,9 +23,10 @@ module RedisCounters
 
     # Public: Возвращает данные счетчика для указанной кластера из указанных партиций.
     #
-    # cluster - Hash - кластер (опционально, если не используются кластеризация).
-    # parts   - Array of Hash - список партиций (опционально).
-    #           По умолчанию, выбираются все данные кластера.
+    # params - Hash - параметров, определяющий кластер и партицию.
+    #
+    # Партиция может быть не задана, тогда будут возвращены все партиции кластера.
+    # Может быть задана не листовая партиция, тогда будут все её листовые подпартции.
     #
     # Если передан блок, то вызывает блок для каждой партиции.
     # Если блок, не передн, то аккумулирует данные,
@@ -35,7 +37,7 @@ module RedisCounters
     def data(params = {})
       total_rows = 0
       cluster = prepared_cluster(params)
-      parts = partitions(params).map { |partition| prepared_parts(partition) }
+      parts = partitions(params).map { |partition| prepared_part(partition) }
 
       result = parts.flat_map do |partition|
         rows = partition_data(cluster, partition)
@@ -46,9 +48,12 @@ module RedisCounters
       block_given? ? total_rows : result
     end
 
-    # Public: Транзакционно удаляет данные всех указанных партиций.
+    # Public: Транзакционно удаляет данные указанной партиций или всех её подпартиций.
     #
-    # parts - Array of Hash - список партиций.
+    # params - Hash - параметров, определяющий кластер и партицию.
+    #
+    # Партиция может быть не задана, тогда будут возвращены все партиции кластера.
+    # Может быть задана не листовая партиция, тогда будут все её листовые подпартции.
     #
     # Если передан блок, то вызывает блок, после удаления всех данных, в транзакции.
     #
@@ -65,17 +70,19 @@ module RedisCounters
 
     # Public: Нетранзакционно удаляет данные конкретной конечной партиции.
     #
-    # cluster       - Hash - кластер.
-    # partition     - Hash - партиция.
+    # params        - Hash - параметров, определяющий кластер и листовую партицию.
+    #
     # write_session - Redis - соединение с Redis, в рамках которого
     #                 будет производится удаление (опционально).
     #                 По умолчанию - основное соединение счетчика.
+    #
+    # Должна быть задана конкретная листовая партиция.
     #
     # Returns Nothing.
     #
     def delete_partition_direct!(params = {}, write_session = redis)
       cluster = prepared_cluster(params)
-      partition = prepared_parts(params, :only_leaf => true)
+      partition = prepared_part(params, :only_leaf => true)
       key = key(partition, cluster)
       write_session.del(key)
     end
@@ -110,7 +117,7 @@ module RedisCounters
 
     # Protected: Возвращает кластер в виде массива параметров, однозначно его идентифицирующих.
     #
-    # cluster - Hash - кластер.
+    # cluster - Hash - хеш параметров, определяющий кластер.
     # options - Hash - хеш опций:
     #           :only_leaf - Boolean - выбирать только листовые кластеры (по умолачнию - true).
     #                        Если флаг установлен в true и передана не листовой кластер, то
@@ -145,7 +152,7 @@ module RedisCounters
     # Protected: Возвращает массив партиций, где каждая партиция,
     # представляет собой массив параметров, однозначно её идентифицирующих.
     #
-    # parts   - Array of Hash - список партиций.
+    # part    - Hash - хеш параметров, определяющий партицию.
     # options - Hash - хеш опций:
     #           :only_leaf - Boolean - выбирать только листовые партиции (по умолачнию - false).
     #                        Если флаг установлен в true и передана не листовая партиция, то
@@ -156,7 +163,7 @@ module RedisCounters
     #
     # Returns Array of Array.
     #
-    def prepared_parts(parts, options = {})
+    def prepared_part(parts, options = {})
       default_options = {:only_leaf => false}
       options.reverse_merge!(default_options)
 
@@ -172,19 +179,21 @@ module RedisCounters
 
     # Protected: Возвращает массив листовых партиций в виде ключей.
     #
-    # Если кластер не указан и нет кластеризации в счетчике, то возвращает все партиции.
-    # Если партиция не указана, возвращает все партиции кластера (все партиции, если нет кластеризации).
+    # params  - Hash - параметров, определяющий кластер и партицию.
     #
-    # cluster - Hash - кластер.
-    # parts   - Array of Hash - список партиций.
+    # Если кластер не указан и нет кластеризации в счетчике, то возвращает все партиции.
+    # Партиция может быть не задана, тогда будут возвращены все партиции кластера (все партиции, если нет кластеризации).
+    # Может быть задана не листовая партиция, тогда будут все её листовые подпартции.
     #
     # Returns Array of Hash.
     #
     def partitions_raw(params = {})
       cluster = prepared_cluster(params)
-      partition = prepared_parts(params)
+      partition = prepared_part(params)
+
       strict_pattern = key(partition, cluster) if (cluster.present? && partition_keys.blank?) || partition.present?
       fuzzy_pattern = key(partition << '*', cluster)
+
       result = []
       result |= redis.keys(strict_pattern) if strict_pattern.present?
       result |= redis.keys(fuzzy_pattern) if fuzzy_pattern.present?

@@ -19,7 +19,7 @@ module RedisCounters
 
       # Public: Нетранзакционно удаляет данные конкретной конечной партиции.
       #
-      # partition     - Hash - партиция.
+      # params        - Hash - параметров, определяющий кластер и партицию.
       # write_session - Redis - соединение с Redis, в рамках которого
       #                 будет производится удаление (опционально).
       #                 По умолчанию - основное соединение счетчика.
@@ -34,7 +34,7 @@ module RedisCounters
         # удаляем партицию из списка
         return unless use_partitions?
         cluster = prepared_cluster(params)
-        partition = prepared_parts(params, :only_leaf => true)
+        partition = prepared_part(params, :only_leaf => true)
         partition = partition.flatten.join(key_delimiter)
         write_session.lrem(partitions_list_key(cluster), 0, partition)
       end
@@ -128,19 +128,22 @@ module RedisCounters
       # Если кластер не указан и нет кластеризации в счетчике, то возвращает все партиции.
       # Если партиция не указана, возвращает все партиции кластера (все партиции, если нет кластеризации).
       #
-      # cluster - Hash - кластер.
+      # params  - Hash - параметров, определяющий кластер и партицию.
       # parts   - Array of Hash - список партиций.
       #
       # Returns Array of Hash.
       #
       def partitions_raw(params = {})
         reset_partitions_cache
+
         cluster = prepared_cluster(params)
-        partition = prepared_parts(params)
-        partitions_keys = all_partitions(cluster).map { |partition| key(partition, cluster) }
+        partition = prepared_part(params)
+
+        partitions_keys = all_partitions(cluster).map { |part| key(part, cluster) }
 
         strict_pattern = key(partition, cluster) if (cluster.present? && partition_keys.blank?) || partition.present?
         fuzzy_pattern = key(partition << '', cluster)
+
         partitions_keys.select { |part| part.eql?(strict_pattern) } |
           partitions_keys.select { |part| part.start_with?(fuzzy_pattern) }
       end
