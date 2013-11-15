@@ -26,7 +26,7 @@ module RedisCounters
       # Returns Nothing.
       #
       def delete_main_partition!(cluster, write_session = redis)
-        cluster = prepared_cluster(cluster)
+        cluster = ::RedisCounters::Cluster.new(self, cluster).params
         key = key([], cluster)
         write_session.del(key)
       end

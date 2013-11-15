@@ -33,8 +33,10 @@ module RedisCounters
 
         # удаляем партицию из списка
         return unless use_partitions?
-        cluster = prepared_cluster(params)
-        partition = prepared_part(params, :only_leaf => true)
+
+        cluster = ::RedisCounters::Cluster.new(self, params).params
+        partition = ::RedisCounters::Partition.new(self, params).params(:only_leaf => true)
+
         partition = partition.flatten.join(key_delimiter)
         write_session.lrem(partitions_list_key(cluster), 0, partition)
       end
@@ -136,8 +138,8 @@ module RedisCounters
       def partitions_keys(params = {})
         reset_partitions_cache
 
-        cluster = prepared_cluster(params)
-        partition = prepared_part(params)
+        cluster = ::RedisCounters::Cluster.new(self, params).params
+        partition = ::RedisCounters::Partition.new(self, params).params
 
         partitions_keys = all_partitions(cluster).map { |part| key(part, cluster) }
 

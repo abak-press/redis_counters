@@ -40,8 +40,8 @@ module RedisCounters
     #
     def data(params = {})
       total_rows = 0
-      cluster = prepared_cluster(params)
-      parts = partitions(params).map { |partition| prepared_part(partition) }
+      cluster = ::RedisCounters::Cluster.new(self, params).params
+      parts = partitions(params).map { |partition| ::RedisCounters::Partition.new(self, partition).params }
 
       result = parts.flat_map do |partition|
         rows = partition_data(cluster, partition)
@@ -85,8 +85,8 @@ module RedisCounters
     # Returns Nothing.
     #
     def delete_partition_direct!(params = {}, write_session = redis)
-      cluster = prepared_cluster(params)
-      partition = prepared_part(params, :only_leaf => true)
+      cluster = ::RedisCounters::Cluster.new(self, params).params
+      partition = ::RedisCounters::Partition.new(self, params).params(:only_leaf => true)
       key = key(partition, cluster)
       write_session.del(key)
     end
@@ -119,71 +119,9 @@ module RedisCounters
       partition_keys.present?
     end
 
-    # Protected: Возвращает кластер в виде массива параметров, однозначно его идентифицирующих.
-    #
-    # cluster - Hash - хеш параметров, определяющий кластер.
-    # options - Hash - хеш опций:
-    #           :only_leaf - Boolean - выбирать только листовые кластеры (по умолачнию - true).
-    #                        Если флаг установлен в true и передана не листовой кластер, то
-    #                        будет сгенерировано исключение KeyError.
-    #
-    # Метод генерирует исключение ArgumentError, если переданы параметры не верно идентифицирующие кластер.
-    # Например: ключи кластеризации счетчика {:param1, :param2, :param3}, а переданы {:param1, :param3}.
-    # Метод генерирует исключение ArgumentError, 'You must specify a cluster',
-    # если кластер передан в виде пустого хеша, но кластеризация используется в счетчике.
-    #
-    # Returns Array.
-    #
-    def prepared_cluster(cluster, options = {})
-      if cluster_keys.present? && cluster.blank?
-        raise ArgumentError, 'You must specify a cluster'
-      end
-
-      default_options = {:only_leaf => true}
-      options.reverse_merge!(default_options)
-
-      cluster = cluster.with_indifferent_access
-      cluster_keys.inject(Array.new) do |result, key|
-        param = (options[:only_leaf] ? cluster.fetch(key) : cluster[key])
-        next result unless cluster.has_key?(key)
-        next result << param if result.size >= cluster_keys.index(key)
-
-        raise ArgumentError, 'An incorrectly specified cluster %s' % [cluster]
-      end
-    end
-
-
-    # Protected: Возвращает массив партиций, где каждая партиция,
-    # представляет собой массив параметров, однозначно её идентифицирующих.
-    #
-    # part    - Hash - хеш параметров, определяющий партицию.
-    # options - Hash - хеш опций:
-    #           :only_leaf - Boolean - выбирать только листовые партиции (по умолачнию - false).
-    #                        Если флаг установлен в true и передана не листовая партиция, то
-    #                        будет сгенерировано исключение KeyError.
-    #
-    # Метод генерирует исключение ArgumentError, если переданы параметры не верно идентифицирующие партицию.
-    # Например: ключи партиционирования счетчика {:param1, :param2, :param3}, а переданы {:param1, :param3}.
-    #
-    # Returns Array of Array.
-    #
-    def prepared_part(parts, options = {})
-      default_options = {:only_leaf => false}
-      options.reverse_merge!(default_options)
-
-      partition = parts.with_indifferent_access
-      partition_keys.inject(Array.new) do |result, key|
-        param = (options[:only_leaf] ? partition.fetch(key) : partition[key])
-        next result unless partition.has_key?(key)
-        next result << param if result.size >= partition_keys.index(key)
-
-        raise ArgumentError, 'An incorrectly specified partition %s' % [partition]
-      end
-    end
-
     # Protected: Возвращает массив листовых партиций в виде ключей.
     #
-    # params  - Hash - параметров, определяющий кластер и партицию.
+    # params  - Hash - хеш параметров, определяющий кластер и партицию.
     #
     # Если кластер не указан и нет кластеризации в счетчике, то возвращает все партиции.
     # Партиция может быть не задана, тогда будут возвращены все партиции кластера (все партиции, если нет кластеризации).
@@ -191,9 +129,9 @@ module RedisCounters
     #
     # Returns Array of Hash.
     #
-    def partitions_raw(params = {})
-      cluster = prepared_cluster(params)
-      partition = prepared_part(params)
+    def partitions_keys(params = {})
+      cluster = ::RedisCounters::Cluster.new(self, params).params
+      partition = ::RedisCounters::Partition.new(self, params).params
 
       strict_pattern = key(partition, cluster) if (cluster.present? && partition_keys.blank?) || partition.present?
       fuzzy_pattern = key(partition << '*', cluster)
