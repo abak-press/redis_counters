@@ -3,8 +3,9 @@
 desc 'Release gem (build and upload to gem repo)'
 task :release => [
   :ensure_master,
-  :build,
+  :check,
   'version:release',
+  :build,
   :tag,
   :push,
   :upload
