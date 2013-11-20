@@ -354,6 +354,14 @@ describe RedisCounters::HashCounter do
     before { counter.process(partition_2) }
     before { counter.process(partition_3) }
 
+    context '#delete_all!' do
+      before { counter.delete_all! }
+
+      it { expect(counter.partitions).to eq [] }
+      it { expect(counter.data).to eq [] }
+      it { expect(redis.keys).to eq [] }
+    end
+
     context '#delete_partitions!' do
       context 'when no params given' do
         before { counter.delete_partitions! }

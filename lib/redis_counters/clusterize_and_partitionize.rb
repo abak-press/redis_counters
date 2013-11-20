@@ -72,6 +72,25 @@ module RedisCounters
       end
     end
 
+    # Public: Транзакционно удаляет все данные счетчика в кластере.
+    # Если кластеризация не используется, то удаляет все данные.
+    #
+    # cluster - Hash - хеш параметров, определяющих кластер.
+    #                  Опционально, если кластеризация не используется.
+    #
+    # Если передан блок, то вызывает блок, после удаления всех данных, в транзакции.
+    #
+    # Returns Nothing.
+    #
+    def delete_all!(cluster = {})
+      parts = partitions(cluster)
+
+      transaction do
+        delete_all_direct!(cluster, redis, parts)
+        yield if block_given?
+      end
+    end
+
     # Public: Нетранзакционно удаляет данные конкретной конечной партиции.
     #
     # params        - Hash - хеш параметров, определяющий кластер и листовую партицию.
@@ -89,6 +108,22 @@ module RedisCounters
       partition = ::RedisCounters::Partition.new(self, params).params(:only_leaf => true)
       key = key(partition, cluster)
       write_session.del(key)
+    end
+
+    # Public: Нетранзакционно удаляет все данные счетчика в кластере.
+    # Если кластеризация не используется, то удаляет все данные.
+    #
+    # cluster       - Hash - хеш параметров, определяющих кластер.
+    # write_session - Redis - соединение с Redis, в рамках которого
+    #                 будет производится удаление (опционально).
+    #                 По умолчанию - основное соединение счетчика.
+    #
+    # Returns Nothing.
+    #
+    def delete_all_direct!(cluster, write_session = redis, parts = partitions(cluster))
+      parts.each do |partition|
+        delete_partition_direct!(cluster.merge(partition), write_session)
+      end
     end
 
     protected
@@ -121,7 +156,7 @@ module RedisCounters
 
     # Protected: Возвращает массив листовых партиций в виде ключей.
     #
-    # params  - Hash - хеш параметров, определяющий кластер и партицию.
+    # params - Hash - хеш параметров, определяющий кластер и партицию.
     #
     # Если кластер не указан и нет кластеризации в счетчике, то возвращает все партиции.
     # Партиция может быть не задана, тогда будут возвращены все партиции кластера (все партиции, если нет кластеризации).
