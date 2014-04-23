@@ -1,4 +1,4 @@
-# RedisCounters [![Code Climate](https://codeclimate.com/repos/522e9b497e00a46a0d01227c/badges/ae868ca76e52852ebc5a/gpa.png)](https://codeclimate.com/repos/522e9b497e00a46a0d01227c/feed) [![CircleCI](https://circleci.com/gh/abak-press/class_logger.png?circle-token=e4d0ed5c60a5ff795bf971229addb871552c2750)](https://circleci.com/gh/abak-press/redis_counters)
+# RedisCounters [![Code Climate](https://codeclimate.com/repos/522e9b497e00a46a0d01227c/badges/ae868ca76e52852ebc5a/gpa.png)](https://codeclimate.com/repos/522e9b497e00a46a0d01227c/feed) [![CircleCI](https://circleci.com/gh/abak-press/redis_counters.png?circle-token=546614f052a33b41e85b547c40ff74a15fcaf010)](https://circleci.com/gh/abak-press/redis_counters)
 
 Набор структур данных на базе Redis.
 
