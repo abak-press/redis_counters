@@ -7,7 +7,7 @@ describe RedisCounters::UniqueHashCounter do
   let(:options) { {
       :counter_name => :test_counter,
       :field_name   => :test_field,
-      :unique_list  => { :list_class => RedisCounters::UniqueValuesLists::Standard }
+      :unique_list  => { :list_class => RedisCounters::UniqueValuesLists::Blocking }
   } }
 
   let(:counter) { described_class.new(redis, options) }
@@ -18,7 +18,7 @@ describe RedisCounters::UniqueHashCounter do
         :field_name => 'dd',
         :partition_keys => [:date],
         :unique_list  => {
-            :list_class => RedisCounters::UniqueValuesLists::Fast,
+            :list_class => RedisCounters::UniqueValuesLists::NonBlocking,
             :value_keys => [:sid],
             :cluster_keys => [:p1],
             :partition_keys => [:p2]
@@ -49,7 +49,7 @@ describe RedisCounters::UniqueHashCounter do
         :group_keys => [:param1],
         :partition_keys => [:date],
         :unique_list  => {
-          :list_class => RedisCounters::UniqueValuesLists::Standard,
+          :list_class => RedisCounters::UniqueValuesLists::Blocking,
           :value_keys => [:sid],
           :cluster_keys => [:param2],
           :partition_keys => [:date]

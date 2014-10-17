@@ -14,7 +14,7 @@ module RedisCounters
     #   * Ведет список партиций;
     #   * Полностью транзакционен.
 
-    class Standard < Base
+    class Blocking < Base
       PARTITIONS_LIST_POSTFIX = :partitions
 
       # Public: Нетранзакционно удаляет данные конкретной конечной партиции.

@@ -141,7 +141,7 @@ redis:
 {:company_id => 2, :city_id=>"10", :value=>4}
 ```
 
-## RedisCounters::UniqueValuesLists::Standard
+## RedisCounters::UniqueValuesLists::Blocking
 
 Список уникальных значений, с возможностью кластеризации и партиционирования значений.
 
@@ -162,7 +162,7 @@ redis:
 
 Простой список уникальных пользователей.
 ```ruby
-counter = RedisCounters::UniqueValuesLists::Standard.new(redis, {
+counter = RedisCounters::UniqueValuesLists::Blocking.new(redis, {
   :counter_name => :users,
   :value_keys   => [:user_id]
 })
@@ -177,7 +177,7 @@ redis:
 
 Список уникальных пользователей, посетивших компаниию, за месяц, кластеризованный по суткам.
 ```ruby
-counter = RedisCounters::UniqueValuesLists::Standard.new(redis, {
+counter = RedisCounters::UniqueValuesLists::Blocking.new(redis, {
   :counter_name   => :company_users_by_month,
   :value_keys     => [:company_id, :user_id],
   :cluster_keys     => [:start_month_date],
@@ -199,14 +199,14 @@ redis:
   company_users_by_month:2013-09-01:2013-09-05 = ['1:22']
 ```
 
-## RedisCounters::UniqueValuesLists::Fast
+## RedisCounters::UniqueValuesLists::NonBlocking
 
 Быстрый список уникальных значений, с возможностью кластеризации и партиционирования значений.
 
 Скорость работы достигается за счет следующих особенностей:
 - Использует 2х объема памяти для хранения элементов,
 при использовании партиционирования.
-Eсли партиционирование не используется, то расход памяти такой-же как у UniqueValuesLists::Standard.
+Eсли партиционирование не используется, то расход памяти такой-же как у UniqueValuesLists::Blocking.
 - Не транзакционен - сторонний блок, выполняемый после добавления уникального элемента,
 выполняется за пределами транзакции, в которой добавляется уникальный элемент.
 - Не ведется список партиций.
@@ -233,7 +233,7 @@ counter = RedisCounters::UniqueHashCounter.new(redis, {
   :group_keys     => [:company_id],
   :partition_keys => [:date],
   :unique_list => {
-    :list_class     => RedisCounters::UniqueValuesLists::Standard
+    :list_class     => RedisCounters::UniqueValuesLists::Blocking
     :value_keys     => [:company_id, :user_id],
     :cluster_keys   => [:start_month_date],
     :partition_keys => [:date]

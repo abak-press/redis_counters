@@ -4,8 +4,8 @@ require 'redis_counters/base_counter'
 require 'redis_counters/hash_counter'
 require 'redis_counters/unique_hash_counter'
 require 'redis_counters/unique_values_lists/base'
-require 'redis_counters/unique_values_lists/standard'
-require 'redis_counters/unique_values_lists/fast'
+require 'redis_counters/unique_values_lists/blocking'
+require 'redis_counters/unique_values_lists/non_blocking'
 
 require 'active_support/core_ext'
 

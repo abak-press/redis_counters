@@ -16,7 +16,7 @@ module RedisCounters
     #     или воспользоваться методами delete_all! или delete_all_direct!,
     #     для удаления всех партиций кластера включая основную.
 
-    class Fast < UniqueValuesLists::Base
+    class NonBlocking < UniqueValuesLists::Base
 
       # Public: Нетранзакционно удаляет все данные счетчика в кластере, включая основную партицию.
       # Если кластеризация не используется, то удаляет все данные.

@@ -1,6 +1,6 @@
 require 'spec_helper'
 
-describe RedisCounters::UniqueValuesLists::Standard do
+describe RedisCounters::UniqueValuesLists::Blocking do
   it_behaves_like 'unique_values_lists/common'
   it_behaves_like 'unique_values_lists/set'
 
