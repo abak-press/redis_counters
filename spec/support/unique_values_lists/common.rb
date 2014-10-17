@@ -67,21 +67,28 @@ shared_examples_for 'unique_values_lists/common' do
   end
 
   context '#has_value?' do
-    let(:options) { {
-      :counter_name   => :test_counter,
-      :value_keys     => [:param0]
-    } }
+    context 'when cluster keys given and partition keys given' do
+      let(:options) { {
+          :counter_name   => :test_counter,
+          :value_keys     => [:param0],
+          :cluster_keys   => [:cluster],
+          :partition_keys => [:part]
+      } }
 
-    context 'when item not exists' do
-      it { expect(counter.has_value?(:param0 => 1)).to be_false }
+      let(:cluster1) { {:cluster => :cluster1} }
+      let(:cluster2) { {:cluster => :cluster2} }
+
+      before { values.times { counter.add(:param0 => 1, :cluster => :cluster1, :part => :part1) } }
+      before { values.times { counter.add(:param0 => 2, :cluster => :cluster2, :part => :part2) } }
+
+      it { expect(counter.has_value?(cluster1.merge(:param0 => 1))).to be_true }
+      it { expect(counter.has_value?(cluster1.merge(:param0 => 2))).to be_false }
+      it { expect(counter.has_value?(cluster2.merge(:param0 => 1))).to be_false }
+      it { expect(counter.has_value?(cluster2.merge(:param0 => 2))).to be_true }
     end
 
-    context 'when item exists' do
-      before { counter.add(:param0 => 1) }
-
-      it { expect(counter.has_value?(:param0 => 1)).to be_true }
-      it { expect(counter.has_value?(:param0 => 2)).to be_false }
-    end
+    # check no cluster raise
+    # check unknown cluster raise
   end
 
   context '#partitions' do
@@ -254,17 +261,17 @@ shared_examples_for 'unique_values_lists/common' do
       # новое значение в новом подкластере
       before { values.times { counter.add(:param0 => 6, :param1 => 7, :cluster => :cluster1, :subcluster => :subcluster2, :part => :part1, :subpart => :subpart1) } }
 
-      # context 'when no cluster given' do
-      #   it { expect { counter.data }.to raise_error ArgumentError }
-      # end
-      #
-      # context 'when no leaf cluster given' do
-      #   it { expect { counter.data(:cluster => :cluster1) }.to raise_error KeyError }
-      # end
-      #
-      # context 'when unknown cluster given' do
-      #   it { expect(counter.data(:cluster => :unknown_cluster, :subcluster => :subcluster)).to have(0).partitions }
-      # end
+      context 'when no cluster given' do
+        it { expect { counter.data }.to raise_error ArgumentError }
+      end
+
+      context 'when no leaf cluster given' do
+        it { expect { counter.data(:cluster => :cluster1) }.to raise_error KeyError }
+      end
+
+      context 'when unknown cluster given' do
+        it { expect(counter.data(:cluster => :unknown_cluster, :subcluster => :subcluster)).to have(0).partitions }
+      end
 
       context 'when no partition given' do
         it { expect(counter.data(cluster1_subcluster1)).to have(4).rows }

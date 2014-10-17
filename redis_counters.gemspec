@@ -23,6 +23,7 @@ Gem::Specification.new do |gem|
   gem.add_development_dependency 'rspec', '~> 2.14.0'
   gem.add_development_dependency 'mock_redis'
   gem.add_development_dependency 'timecop'
+  gem.add_development_dependency 'codeclimate-test-reporter', '~> 0.4.1'
 
   # test coverage tool
   gem.add_development_dependency 'simplecov'

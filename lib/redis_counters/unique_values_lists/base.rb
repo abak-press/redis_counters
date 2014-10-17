@@ -12,21 +12,22 @@ module RedisCounters
       include RedisCounters::ClusterizeAndPartitionize
 
       alias_method :add, :process
+      alias_method :<<, :process
 
       # Public: Проверяет существует ли заданное значение.
       #
-      # value_params - Hash - параметры значения.
+      # params - Hash - параметры кластера и значения.
       #
       # Returns Boolean.
       #
-      def has_value?(value_params)
+      def has_value?(params)
         raise NotImplementedError
       end
 
       protected
 
-      def value(value_params = params)
-        value_params = value_keys.map { |key| value_params.fetch(key) }
+      def value
+        value_params = value_keys.map { |key| params.fetch(key) }
         value_params.join(value_delimiter)
       end
 
