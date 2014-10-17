@@ -1,4 +1,8 @@
-# RedisCounters [![Code Climate](https://codeclimate.com/repos/522e9b497e00a46a0d01227c/badges/ae868ca76e52852ebc5a/gpa.png)](https://codeclimate.com/repos/522e9b497e00a46a0d01227c/feed) [![CircleCI](https://circleci.com/gh/abak-press/redis_counters.png?circle-token=546614f052a33b41e85b547c40ff74a15fcaf010)](https://circleci.com/gh/abak-press/redis_counters)
+# RedisCounters
+
+[![Dolly](http://dolly.railsc.ru/badges/abak-press/redis_counters/master)](http://dolly.railsc.ru/projects/36/builds/latest/?ref=master)
+[![Code Climate](https://codeclimate.com/repos/522e9b497e00a46a0d01227c/badges/ae868ca76e52852ebc5a/gpa.png)](https://codeclimate.com/repos/522e9b497e00a46a0d01227c/feed)
+[![Test Coverage](https://codeclimate.com/repos/522e9b497e00a46a0d01227c/badges/ae868ca76e52852ebc5a/coverage.svg)](https://codeclimate.com/repos/522e9b497e00a46a0d01227c/feed)
 
 Набор структур данных на базе Redis.
 
@@ -175,12 +179,12 @@ redis:
   users = ['1', '2']
 ```
 
-Список уникальных пользователей, посетивших компаниию, за месяц, кластеризованный по суткам.
+Список уникальных пользователей, посетивших компаниию, за месяц, партиционированный по суткам.
 ```ruby
 counter = RedisCounters::UniqueValuesLists::Blocking.new(redis, {
   :counter_name   => :company_users_by_month,
   :value_keys     => [:company_id, :user_id],
-  :cluster_keys     => [:start_month_date],
+  :cluster_keys   => [:start_month_date],
   :partition_keys => [:date]
 })
 
@@ -215,6 +219,55 @@ Eсли партиционирование не используется, то �
 
 ### Сложность
   + добавление элемента - O(1)
+
+
+## RedisCounters::UniqueValuesLists::Expirable
+
+Список уникальных значений, с возможностью expire отдельных элементов.
+
+На основе сортированного множества.
+http://redis4you.com/code.php?id=010
+
+На основе механизма оптимистических блокировок.
+смотри Optimistic locking using check-and-set:
+http://redis.io/topics/transactions
+
+Особенности:
+- Expire - таймаут, можно установить как на уровне счетчика,
+  так и на уровне отдельного занчения;
+- Очистка возможна как в автоматическогом режиме так в и ручном;
+- Значения сохраняет в партициях;
+- Ведет список партиций;
+- Полностью транзакционен.
+
+Обязательные параметры: counter_name и value_keys.
+Таймаут задается параметром :expire. По умолчанию :never.
+:clean_expired - режим автоочистки. По умолчанию true.
+
+### Примеры использования
+
+```ruby
+counter = RedisCounters::UniqueValuesLists::Expirable.new(redis,
+  :counter_name => :sessions,
+  :value_keys   => [:session_id],
+  :expire       => 10.minutes
+)
+
+counter << session_id: 1
+counter << session_id: 2
+counter << session_id: 3, expire: :never
+
+counter.data
+> [{session_id: 1}, {session_id: 2}, {session_id: 3}]
+
+# after 10 minutes
+
+counter.data
+> [{session_id: 3}]
+
+counter.has_value?(session_id: 1)
+false
+```
 
 ## RedisCounters::UniqueHashCounter
 

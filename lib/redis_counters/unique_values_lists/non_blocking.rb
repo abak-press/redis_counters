@@ -20,12 +20,13 @@ module RedisCounters
 
       # Public: Проверяет существует ли заданное значение.
       #
-      # value_params - Hash - параметры значения.
+      # params - Hash - параметры кластера и значения.
       #
       # Returns Boolean.
       #
-      def has_value?(value_params)
-        redis.sismember(main_partition_key, value(value_params))
+      def has_value?(params)
+        set_params(params)
+        redis.sismember(main_partition_key, value)
       end
 
       # Public: Нетранзакционно удаляет все данные счетчика в кластере, включая основную партицию.
@@ -55,7 +56,7 @@ module RedisCounters
       #
       def delete_main_partition!(cluster = {}, write_session = redis)
         cluster = ::RedisCounters::Cluster.new(self, cluster).params
-        key = key([], cluster)
+        key = key(main_partition, cluster)
         write_session.del(key)
       end
 
@@ -74,11 +75,15 @@ module RedisCounters
       end
 
       def main_partition_key
-        key([])
+        key(main_partition)
       end
 
       def current_partition_key
         key
+      end
+
+      def main_partition
+        []
       end
     end
 

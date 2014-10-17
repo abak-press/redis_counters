@@ -1,9 +1,13 @@
 require 'rubygems'
 require 'bundler/setup'
 require 'rspec'
-require 'simplecov'
 require 'mock_redis'
+require 'timecop'
 
+require 'codeclimate-test-reporter'
+CodeClimate::TestReporter.start
+
+require 'simplecov'
 SimpleCov.start('test_frameworks')
 
 require 'redis_counters'

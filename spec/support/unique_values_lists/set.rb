@@ -3,11 +3,6 @@ shared_examples_for 'unique_values_lists/set' do
   let(:redis) { MockRedis.new }
   let(:values) { rand(10) + 1 }
 
-  let(:options) { {
-    :counter_name => :test_counter,
-    :value_keys   => [:param0]
-  } }
-
   let(:counter) { described_class.new(redis, options) }
 
   context '#add' do
@@ -15,14 +10,16 @@ shared_examples_for 'unique_values_lists/set' do
       let(:options) { {
         :counter_name   => :test_counter,
         :value_keys     => [:param0, :param1],
-        :cluster_keys     => [:param2],
+        :cluster_keys   => [:param2],
         :partition_keys => [:param3, :param4]
       } }
 
-      before { values.times { counter.add(:param0 => 1, :param1 => 2, :param2 => :cluster1, :param3 => :part1, :param4 => :part2) } }
-      before { values.times { counter.add(:param0 => 2, :param1 => 1, :param2 => :cluster1, :param3 => :part1, :param4 => :part2) } }
-      before { values.times { counter.add(:param0 => 3, :param1 => 2, :param2 => :cluster1, :param3 => :part2, :param4 => :part2) } }
-      before { values.times { counter.add(:param0 => 4, :param1 => 5, :param2 => :cluster2, :param3 => :part1, :param4 => :part2) } }
+      before do
+        values.times { counter.add(:param0 => 1, :param1 => 2, :param2 => :cluster1, :param3 => :part1, :param4 => :part2) }
+        values.times { counter.add(:param0 => 2, :param1 => 1, :param2 => :cluster1, :param3 => :part1, :param4 => :part2) }
+        values.times { counter.add(:param0 => 3, :param1 => 2, :param2 => :cluster1, :param3 => :part2, :param4 => :part2) }
+        values.times { counter.add(:param0 => 4, :param1 => 5, :param2 => :cluster2, :param3 => :part1, :param4 => :part2) }
+      end
 
       it { expect(redis.keys('*')).to have(5).key }
 
@@ -42,14 +39,16 @@ shared_examples_for 'unique_values_lists/set' do
 
     context 'when cluster and partition keys no given' do
       let(:options) { {
-        :counter_name   => :test_counter,
-        :value_keys     => [:param0, :param1]
+        :counter_name => :test_counter,
+        :value_keys   => [:param0, :param1]
       } }
 
-      before { values.times { counter.add(:param0 => 1, :param1 => 2) } }
-      before { values.times { counter.add(:param0 => 1, :param1 => 2) } }
-      before { values.times { counter.add(:param0 => 2, :param1 => 1) } }
-      before { values.times { counter.add(:param0 => 3, :param1 => 2) } }
+      before do
+        values.times { counter.add(:param0 => 1, :param1 => 2) }
+        values.times { counter.add(:param0 => 1, :param1 => 2) }
+        values.times { counter.add(:param0 => 2, :param1 => 1) }
+        values.times { counter.add(:param0 => 3, :param1 => 2) }
+      end
 
       it { expect(redis.keys('*')).to have(1).key }
 
@@ -68,10 +67,12 @@ shared_examples_for 'unique_values_lists/set' do
         :partition_keys => [:param3, :param4]
       } }
 
-      before { values.times { counter.add(:param0 => 1, :param1 => 2, :param3 => :part1, :param4 => :part2) } }
-      before { values.times { counter.add(:param0 => 2, :param1 => 1, :param3 => :part1, :param4 => :part2) } }
-      before { values.times { counter.add(:param0 => 3, :param1 => 2, :param3 => :part2, :param4 => :part2) } }
-      before { values.times { counter.add(:param0 => 4, :param1 => 5, :param3 => :part1, :param4 => :part2) } }
+      before do
+        values.times { counter.add(:param0 => 1, :param1 => 2, :param3 => :part1, :param4 => :part2) }
+        values.times { counter.add(:param0 => 2, :param1 => 1, :param3 => :part1, :param4 => :part2) }
+        values.times { counter.add(:param0 => 3, :param1 => 2, :param3 => :part2, :param4 => :part2) }
+        values.times { counter.add(:param0 => 4, :param1 => 5, :param3 => :part1, :param4 => :part2) }
+      end
 
       it { expect(redis.keys('*')).to have(3).key }
 
@@ -89,15 +90,17 @@ shared_examples_for 'unique_values_lists/set' do
 
     context 'when cluster keys given, but partition keys not given' do
       let(:options) { {
-        :counter_name   => :test_counter,
-        :value_keys     => [:param0, :param1],
-        :cluster_keys     => [:param2]
+        :counter_name  => :test_counter,
+        :value_keys    => [:param0, :param1],
+        :cluster_keys  => [:param2]
       } }
 
-      before { values.times { counter.add(:param0 => 1, :param1 => 2, :param2 => :cluster1) } }
-      before { values.times { counter.add(:param0 => 2, :param1 => 1, :param2 => :cluster1) } }
-      before { values.times { counter.add(:param0 => 3, :param1 => 2, :param2 => :cluster1) } }
-      before { values.times { counter.add(:param0 => 4, :param1 => 5, :param2 => :cluster2) } }
+      before do
+        values.times { counter.add(:param0 => 1, :param1 => 2, :param2 => :cluster1) }
+        values.times { counter.add(:param0 => 2, :param1 => 1, :param2 => :cluster1) }
+        values.times { counter.add(:param0 => 3, :param1 => 2, :param2 => :cluster1) }
+        values.times { counter.add(:param0 => 4, :param1 => 5, :param2 => :cluster2) }
+      end
 
       it { expect(redis.keys('*')).to have(2).key }
 

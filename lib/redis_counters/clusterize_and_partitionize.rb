@@ -129,6 +129,9 @@ module RedisCounters
     protected
 
     def key(partition = partition_params, cluster = cluster_params)
+      raise 'Array required' if partition && !partition.is_a?(Array)
+      raise 'Array required' if cluster && !cluster.is_a?(Array)
+
       [counter_name, cluster, partition].flatten.join(key_delimiter)
     end
 
@@ -153,6 +156,17 @@ module RedisCounters
     def use_partitions?
       partition_keys.present?
     end
+
+    def set_params(params)
+      @params = params.with_indifferent_access
+      check_cluster_params
+    end
+
+    def form_cluster_params(cluster_params = params)
+      RedisCounters::Cluster.new(self, cluster_params).params
+    end
+
+    alias_method :check_cluster_params, :form_cluster_params
 
     # Protected: Возвращает массив листовых партиций в виде ключей.
     #

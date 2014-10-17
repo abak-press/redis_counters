@@ -13,10 +13,10 @@ describe RedisCounters::UniqueValuesLists::Blocking do
 
     context 'when group and partition keys given' do
       let(:options) { {
-          :counter_name   => :test_counter,
-          :value_keys     => [:param0, :param1],
-          :cluster_keys    => [:param2],
-          :partition_keys => [:param3, :param4]
+        :counter_name   => :test_counter,
+        :value_keys     => [:param0, :param1],
+        :cluster_keys   => [:param2],
+        :partition_keys => [:param3, :param4]
       } }
 
       before { values.times { counter.process(:param0 => 1, :param1 => 2, :param2 => :cluster1, :param3 => :part1, :param4 => :part2) } }
@@ -56,9 +56,9 @@ describe RedisCounters::UniqueValuesLists::Blocking do
 
     context 'when no cluster keys given, but partition keys given' do
       let(:options) { {
-          :counter_name   => :test_counter,
-          :value_keys     => [:param0, :param1],
-          :partition_keys => [:param3, :param4]
+        :counter_name   => :test_counter,
+        :value_keys     => [:param0, :param1],
+        :partition_keys => [:param3, :param4]
       } }
 
       before { values.times { counter.process(:param0 => 1, :param1 => 2, :param3 => :part1, :param4 => :part2) } }
