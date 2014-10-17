@@ -66,6 +66,24 @@ shared_examples_for 'unique_values_lists/common' do
     end
   end
 
+  context '#has_value?' do
+    let(:options) { {
+      :counter_name   => :test_counter,
+      :value_keys     => [:param0]
+    } }
+
+    context 'when item not exists' do
+      it { expect(counter.has_value?(:param0 => 1)).to be_false }
+    end
+
+    context 'when item exists' do
+      before { counter.add(:param0 => 1) }
+
+      it { expect(counter.has_value?(:param0 => 1)).to be_true }
+      it { expect(counter.has_value?(:param0 => 2)).to be_false }
+    end
+  end
+
   context '#partitions' do
     let(:cluster1_subcluster1) { {:cluster => :cluster1, :subcluster => :subcluster1} }
     let(:cluster1_subcluster2) { {:cluster => :cluster1, :subcluster => :subcluster2} }

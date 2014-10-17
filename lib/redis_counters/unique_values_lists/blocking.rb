@@ -17,6 +17,18 @@ module RedisCounters
     class Blocking < Base
       PARTITIONS_LIST_POSTFIX = :partitions
 
+      # Public: Проверяет существует ли заданное значение.
+      #
+      # value_params - Hash - параметры значения.
+      #
+      # Returns Boolean.
+      #
+      def has_value?(value_params)
+        all_partitions.reverse.any? do |partition|
+          redis.sismember(key(partition), value(value_params))
+        end
+      end
+
       # Public: Нетранзакционно удаляет данные конкретной конечной партиции.
       #
       # params        - Hash - хеш параметров, определяющий кластер и партицию.
@@ -55,7 +67,7 @@ module RedisCounters
           watch_partitions_list
           watch_all_partitions
 
-          if value_already_exists?
+          if current_value_already_exists?
             redis.unwatch
             return false
           end
@@ -85,10 +97,8 @@ module RedisCounters
         end
       end
 
-      def value_already_exists?
-        all_partitions.reverse.any? do |partition|
-          redis.sismember(key(partition), value)
-        end
+      def current_value_already_exists?
+        has_value?(params)
       end
 
       def add_value

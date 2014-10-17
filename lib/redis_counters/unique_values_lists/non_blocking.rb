@@ -16,7 +16,17 @@ module RedisCounters
     #     или воспользоваться методами delete_all! или delete_all_direct!,
     #     для удаления всех партиций кластера включая основную.
 
-    class NonBlocking < UniqueValuesLists::Base
+    class NonBlocking < Base
+
+      # Public: Проверяет существует ли заданное значение.
+      #
+      # value_params - Hash - параметры значения.
+      #
+      # Returns Boolean.
+      #
+      def has_value?(value_params)
+        redis.sismember(main_partition_key, value(value_params))
+      end
 
       # Public: Нетранзакционно удаляет все данные счетчика в кластере, включая основную партицию.
       # Если кластеризация не используется, то удаляет все данные.
