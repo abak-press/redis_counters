@@ -1,11 +1,11 @@
 # coding: utf-8
-shared_examples_for 'unique_values_lists' do
+shared_examples_for 'unique_values_lists/common' do
   let(:redis) { MockRedis.new }
   let(:values) { rand(10) + 1 }
 
   let(:options) { {
-      :counter_name => :test_counter,
-      :value_keys   => [:param0]
+    :counter_name => :test_counter,
+    :value_keys   => [:param0]
   } }
 
   let(:counter) { described_class.new(redis, options) }
@@ -19,8 +19,8 @@ shared_examples_for 'unique_values_lists' do
 
     context 'when unknown value_key given' do
       let(:options) { {
-          :counter_name => :test_counter,
-          :value_keys   => [:param0, :param1]
+        :counter_name => :test_counter,
+        :value_keys   => [:param0, :param1]
       } }
 
       it { expect { counter.add(:param1 => 1) }.to raise_error KeyError }
@@ -28,9 +28,9 @@ shared_examples_for 'unique_values_lists' do
 
     context 'when unknown cluster_key given' do
       let(:options) { {
-          :counter_name => :test_counter,
-          :value_keys   => [:param0],
-          :cluster_keys   => [:param1, :param2],
+        :counter_name => :test_counter,
+        :value_keys   => [:param0],
+        :cluster_keys   => [:param1, :param2],
       } }
 
       it { expect { counter.add(:param0 => 1, :param1 => 2) }.to raise_error KeyError }
@@ -38,120 +38,18 @@ shared_examples_for 'unique_values_lists' do
 
     context 'when unknown partition_key given' do
       let(:options) { {
-          :counter_name   => :test_counter,
-          :value_keys     => [:param0],
-          :partition_keys => [:param1, :param2],
+        :counter_name   => :test_counter,
+        :value_keys     => [:param0],
+        :partition_keys => [:param1, :param2],
       } }
 
       it { expect { counter.add(:param0 => 1, :param1 => 2) }.to raise_error KeyError }
     end
 
-    context 'when cluster and partition keys given' do
-      let(:options) { {
-          :counter_name   => :test_counter,
-          :value_keys     => [:param0, :param1],
-          :cluster_keys     => [:param2],
-          :partition_keys => [:param3, :param4]
-      } }
-
-      before { values.times { counter.add(:param0 => 1, :param1 => 2, :param2 => :cluster1, :param3 => :part1, :param4 => :part2) } }
-      before { values.times { counter.add(:param0 => 2, :param1 => 1, :param2 => :cluster1, :param3 => :part1, :param4 => :part2) } }
-      before { values.times { counter.add(:param0 => 3, :param1 => 2, :param2 => :cluster1, :param3 => :part2, :param4 => :part2) } }
-      before { values.times { counter.add(:param0 => 4, :param1 => 5, :param2 => :cluster2, :param3 => :part1, :param4 => :part2) } }
-
-      it { expect(redis.keys('*')).to have(5).key }
-
-      it { expect(redis.exists("test_counter:cluster1:part1:part2")).to be_true }
-      it { expect(redis.exists("test_counter:cluster1:part2:part2")).to be_true }
-      it { expect(redis.exists("test_counter:cluster2:part1:part2")).to be_true }
-
-      it { expect(redis.smembers("test_counter:cluster1:part1:part2")).to have(2).keys }
-      it { expect(redis.smembers("test_counter:cluster1:part2:part2")).to have(1).keys }
-      it { expect(redis.smembers("test_counter:cluster2:part1:part2")).to have(1).keys }
-
-      it { expect(redis.smembers("test_counter:cluster1:part1:part2")).to include '1:2' }
-      it { expect(redis.smembers("test_counter:cluster1:part1:part2")).to include '2:1' }
-      it { expect(redis.smembers("test_counter:cluster1:part2:part2")).to include '3:2' }
-      it { expect(redis.smembers("test_counter:cluster2:part1:part2")).to include '4:5' }
-    end
-
-    context 'when cluster and partition keys no given' do
-      let(:options) { {
-          :counter_name   => :test_counter,
-          :value_keys     => [:param0, :param1]
-      } }
-
-      before { values.times { counter.add(:param0 => 1, :param1 => 2) } }
-      before { values.times { counter.add(:param0 => 1, :param1 => 2) } }
-      before { values.times { counter.add(:param0 => 2, :param1 => 1) } }
-      before { values.times { counter.add(:param0 => 3, :param1 => 2) } }
-
-      it { expect(redis.keys('*')).to have(1).key }
-
-      it { expect(redis.exists("test_counter")).to be_true }
-      it { expect(redis.smembers("test_counter")).to have(3).keys }
-
-      it { expect(redis.smembers("test_counter")).to include '1:2' }
-      it { expect(redis.smembers("test_counter")).to include '2:1' }
-      it { expect(redis.smembers("test_counter")).to include '3:2' }
-    end
-
-    context 'when no cluster keys given, but partition keys given' do
-      let(:options) { {
-          :counter_name   => :test_counter,
-          :value_keys     => [:param0, :param1],
-          :partition_keys => [:param3, :param4]
-      } }
-
-      before { values.times { counter.add(:param0 => 1, :param1 => 2, :param3 => :part1, :param4 => :part2) } }
-      before { values.times { counter.add(:param0 => 2, :param1 => 1, :param3 => :part1, :param4 => :part2) } }
-      before { values.times { counter.add(:param0 => 3, :param1 => 2, :param3 => :part2, :param4 => :part2) } }
-      before { values.times { counter.add(:param0 => 4, :param1 => 5, :param3 => :part1, :param4 => :part2) } }
-
-      it { expect(redis.keys('*')).to have(3).key }
-
-      it { expect(redis.exists("test_counter:part1:part2")).to be_true }
-      it { expect(redis.exists("test_counter:part2:part2")).to be_true }
-
-      it { expect(redis.smembers("test_counter:part1:part2")).to have(3).keys }
-      it { expect(redis.smembers("test_counter:part2:part2")).to have(1).keys }
-
-      it { expect(redis.smembers("test_counter:part1:part2")).to include '1:2' }
-      it { expect(redis.smembers("test_counter:part1:part2")).to include '2:1' }
-      it { expect(redis.smembers("test_counter:part2:part2")).to include '3:2' }
-      it { expect(redis.smembers("test_counter:part1:part2")).to include '4:5' }
-    end
-
-    context 'when cluster keys given, but partition keys not given' do
-      let(:options) { {
-          :counter_name   => :test_counter,
-          :value_keys     => [:param0, :param1],
-          :cluster_keys     => [:param2]
-      } }
-
-      before { values.times { counter.add(:param0 => 1, :param1 => 2, :param2 => :cluster1) } }
-      before { values.times { counter.add(:param0 => 2, :param1 => 1, :param2 => :cluster1) } }
-      before { values.times { counter.add(:param0 => 3, :param1 => 2, :param2 => :cluster1) } }
-      before { values.times { counter.add(:param0 => 4, :param1 => 5, :param2 => :cluster2) } }
-
-      it { expect(redis.keys('*')).to have(2).key }
-
-      it { expect(redis.exists("test_counter:cluster1")).to be_true }
-      it { expect(redis.exists("test_counter:cluster2")).to be_true }
-
-      it { expect(redis.smembers("test_counter:cluster1")).to have(3).keys }
-      it { expect(redis.smembers("test_counter:cluster2")).to have(1).keys }
-
-      it { expect(redis.smembers("test_counter:cluster1")).to include '1:2' }
-      it { expect(redis.smembers("test_counter:cluster1")).to include '2:1' }
-      it { expect(redis.smembers("test_counter:cluster1")).to include '3:2' }
-      it { expect(redis.smembers("test_counter:cluster2")).to include '4:5' }
-    end
-
     context 'when block given' do
       let(:options) { {
-          :counter_name   => :test_counter,
-          :value_keys     => [:param0]
+        :counter_name   => :test_counter,
+        :value_keys     => [:param0]
       } }
 
       context 'when item added' do
@@ -180,10 +78,10 @@ shared_examples_for 'unique_values_lists' do
 
     context 'when cluster and partition keys given' do
       let(:options) { {
-          :counter_name   => :test_counter,
-          :value_keys     => [:param0, :param1],
-          :cluster_keys     => [:cluster, :subcluster],
-          :partition_keys => [:part, :subpart]
+        :counter_name   => :test_counter,
+        :value_keys     => [:param0, :param1],
+        :cluster_keys     => [:cluster, :subcluster],
+        :partition_keys => [:part, :subpart]
       } }
 
       # 2 разных знач в одном кластере и партиции
@@ -238,9 +136,9 @@ shared_examples_for 'unique_values_lists' do
 
     context 'when not cluster keys given and partition keys given' do
       let(:options) { {
-          :counter_name   => :test_counter,
-          :value_keys     => [:param0, :param1],
-          :partition_keys => [:part, :subpart]
+        :counter_name   => :test_counter,
+        :value_keys     => [:param0, :param1],
+        :partition_keys => [:part, :subpart]
       } }
 
       # 2 разных знач в одной партиции
@@ -278,9 +176,9 @@ shared_examples_for 'unique_values_lists' do
 
     context 'when cluster keys given and partition keys not given' do
       let(:options) { {
-          :counter_name   => :test_counter,
-          :value_keys     => [:param0, :param1],
-          :cluster_keys     => [:cluster, :subcluster]
+        :counter_name   => :test_counter,
+        :value_keys     => [:param0, :param1],
+        :cluster_keys     => [:cluster, :subcluster]
       } }
 
       # 2 разных знач в одном кластере
@@ -316,10 +214,10 @@ shared_examples_for 'unique_values_lists' do
 
     context 'when cluster and partition keys given' do
       let(:options) { {
-          :counter_name   => :test_counter,
-          :value_keys     => [:param0, :param1],
-          :cluster_keys     => [:cluster, :subcluster],
-          :partition_keys => [:part, :subpart]
+        :counter_name   => :test_counter,
+        :value_keys     => [:param0, :param1],
+        :cluster_keys     => [:cluster, :subcluster],
+        :partition_keys => [:part, :subpart]
       } }
 
       # 2 разных знач в одном кластере и партиции
@@ -338,17 +236,17 @@ shared_examples_for 'unique_values_lists' do
       # новое значение в новом подкластере
       before { values.times { counter.add(:param0 => 6, :param1 => 7, :cluster => :cluster1, :subcluster => :subcluster2, :part => :part1, :subpart => :subpart1) } }
 
-      context 'when no cluster given' do
-        it { expect { counter.data }.to raise_error ArgumentError }
-      end
-
-      context 'when no leaf cluster given' do
-        it { expect { counter.data(:cluster => :cluster1) }.to raise_error KeyError }
-      end
-
-      context 'when unknown cluster given' do
-        it { expect(counter.data(:cluster => :unknown_cluster, :subcluster => :subcluster)).to have(0).partitions }
-      end
+      # context 'when no cluster given' do
+      #   it { expect { counter.data }.to raise_error ArgumentError }
+      # end
+      #
+      # context 'when no leaf cluster given' do
+      #   it { expect { counter.data(:cluster => :cluster1) }.to raise_error KeyError }
+      # end
+      #
+      # context 'when unknown cluster given' do
+      #   it { expect(counter.data(:cluster => :unknown_cluster, :subcluster => :subcluster)).to have(0).partitions }
+      # end
 
       context 'when no partition given' do
         it { expect(counter.data(cluster1_subcluster1)).to have(4).rows }
@@ -377,9 +275,9 @@ shared_examples_for 'unique_values_lists' do
 
     context 'when not cluster keys given and partition keys given' do
       let(:options) { {
-          :counter_name   => :test_counter,
-          :value_keys     => [:param0, :param1],
-          :partition_keys => [:part, :subpart]
+        :counter_name   => :test_counter,
+        :value_keys     => [:param0, :param1],
+        :partition_keys => [:part, :subpart]
       } }
 
       # 2 разных знач в одной партиции
@@ -412,16 +310,17 @@ shared_examples_for 'unique_values_lists' do
       end
 
       context 'when leaf partition given' do
+        it { expect(counter.data(:part => :part1, 'subpart' => 'subpart1')).to have(2).items }
         it { expect(counter.data(:part => :part1, 'subpart' => 'subpart1')).to include ({'param0' => '1', 'param1' => '2'}) }
-        it { expect(counter.data(:part => :part1, 'subpart' => 'subpart1').first).to include ({'param0' => '1', 'param1' => '3'}) }
+        it { expect(counter.data(:part => :part1, 'subpart' => 'subpart1')).to include ({'param0' => '1', 'param1' => '3'}) }
       end
     end
 
     context 'when cluster keys given and partition keys not given' do
       let(:options) { {
-          :counter_name   => :test_counter,
-          :value_keys     => [:param0, :param1],
-          :cluster_keys     => [:cluster, :subcluster]
+        :counter_name   => :test_counter,
+        :value_keys     => [:param0, :param1],
+        :cluster_keys     => [:cluster, :subcluster]
       } }
 
       # 2 разных знач в одном кластере
@@ -457,10 +356,10 @@ shared_examples_for 'unique_values_lists' do
 
     context 'when cluster and partition keys given' do
       let(:options) { {
-          :counter_name   => :test_counter,
-          :value_keys     => [:param0, :param1],
-          :cluster_keys     => [:cluster, :subcluster],
-          :partition_keys => [:part, :subpart]
+        :counter_name   => :test_counter,
+        :value_keys     => [:param0, :param1],
+        :cluster_keys     => [:cluster, :subcluster],
+        :partition_keys => [:part, :subpart]
       } }
 
       # 2 разных знач в одном кластере и партиции
@@ -539,10 +438,10 @@ shared_examples_for 'unique_values_lists' do
 
     context 'when cluster and partition keys given' do
       let(:options) { {
-          :counter_name   => :test_counter,
-          :value_keys     => [:param0, :param1],
-          :cluster_keys   => [:cluster, :subcluster],
-          :partition_keys => [:part, :subpart]
+        :counter_name   => :test_counter,
+        :value_keys     => [:param0, :param1],
+        :cluster_keys   => [:cluster, :subcluster],
+        :partition_keys => [:part, :subpart]
       } }
 
       # 2 разных знач в одном кластере и партиции
@@ -596,9 +495,9 @@ shared_examples_for 'unique_values_lists' do
 
     context 'when cluster not given and partition keys given' do
       let(:options) { {
-          :counter_name   => :test_counter,
-          :value_keys     => [:param0, :param1],
-          :partition_keys => [:part, :subpart]
+        :counter_name   => :test_counter,
+        :value_keys     => [:param0, :param1],
+        :partition_keys => [:part, :subpart]
       } }
 
       # 2 разных знач в одном кластере и партиции

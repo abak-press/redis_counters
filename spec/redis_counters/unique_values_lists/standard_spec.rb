@@ -1,7 +1,8 @@
 require 'spec_helper'
 
 describe RedisCounters::UniqueValuesLists::Standard do
-  it_behaves_like 'unique_values_lists'
+  it_behaves_like 'unique_values_lists/common'
+  it_behaves_like 'unique_values_lists/set'
 
   context 'when check partitions list' do
     let(:redis) { MockRedis.new }
