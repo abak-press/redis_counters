@@ -1,4 +1,12 @@
-v1.1.0
+
+v1.2.0
+  - 2014/11/10: feature(hash_counter): added float mode (Artem Napolskih)
+  - 2014/10/22: feature(unique_values_list): introduced a list of unique values to expiry of the members (Artem Napolskih)
+  - 2014/10/17: feature(unique_values_list): introduce has_value? method (Artem Napolskih)
+  - 2014/10/17: feature(unique_values_list): rename Standard and Fast unique values list to Blocking and NonBlocking respectively (Artem Napolskih)
+  - 2014/10/17: chore(specs): reorganize unique lists specs (Artem Napolskih)
+  - 2014/04/23: chore(all): fix circleci badge (Artem Napolskih)
+  - 2013/11/20: Release 1.1.0 (Artem Napolskih)
   - 2013/11/20: refactor(all): back delete_all! methods (Artem Napolskih)
   - 2013/11/15: refactor(all): extract Cluster and Partition classes (Artem Napolskih)
   - 2013/11/15: refactor(all): shared code of clustering and partitioning extracted into module (Napolskih)
