@@ -445,4 +445,18 @@ describe RedisCounters::HashCounter do
     it { expect(counter.data.third[:param3]).to eq '21:54' }
     it { expect(counter.data.third[:value]).to eq 3 }
   end
+
+  context 'when check custom increment' do
+    let(:options) { {
+      :counter_name => :test_counter,
+      :field_name   => :test_field
+    } }
+
+    before { value.times { counter.process(:value => 0.2) } }
+
+    it { expect(redis.keys('*')).to have(1).key }
+    it { expect(redis.keys('*').first).to eq 'test_counter' }
+    it { expect(redis.hexists('test_counter', 'test_field')).to be_true }
+    it { expect(redis.hget('test_counter', 'test_field').to_f).to be_within(0.001).of value*0.2.to_f }
+  end
 end

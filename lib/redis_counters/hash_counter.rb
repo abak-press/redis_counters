@@ -14,7 +14,7 @@ module RedisCounters
     protected
 
     def process_value
-      redis.hincrby(key, field, 1)
+      redis.hincrbyfloat(key, field, params.fetch(:value, 1.0))
     end
 
     def field
@@ -48,10 +48,22 @@ module RedisCounters
     def partition_data(cluster, partition)
       keys = group_keys.dup << :value
       redis.hgetall(key(partition, cluster)).inject(Array.new) do |result, (key, value)|
-        values = key.split(value_delimiter, -1) << value.to_i
+        values = key.split(value_delimiter, -1) << format_value(value)
         values = values.from(1) unless group_keys.present?
         result << Hash[keys.zip(values)].with_indifferent_access
       end
+    end
+
+    def format_value(value)
+      if float_mode?
+        value.to_f
+      else
+        value.to_i
+      end
+    end
+
+    def float_mode?
+      @float_mode ||= options.fetch(:float_mode, false)
     end
   end
 
