@@ -22,19 +22,3 @@ def spawn(cmd)
   end
   abort "#{cmd} failed" unless $? && $?.exitstatus == 0
 end
-
-def project
-  'redis_counters'
-end
-
-# get current version from VERSION file
-def current_version
-  File.read(File.join(ROOT, 'VERSION')).strip.chomp
-end
-
-# get released version from git
-def released_version
-  /\Av([\d\.]+)\z/ === `git describe --tags --abbrev=0 2>/dev/null || echo 'v0.0.0'`.chomp.strip
-
-  $1
-end
