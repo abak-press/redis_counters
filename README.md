@@ -1,8 +1,8 @@
 # RedisCounters
 
 [![Dolly](http://dolly.railsc.ru/badges/abak-press/redis_counters/master)](http://dolly.railsc.ru/projects/36/builds/latest/?ref=master)
-[![Code Climate](https://codeclimate.com/repos/522e9b497e00a46a0d01227c/badges/ae868ca76e52852ebc5a/gpa.png)](https://codeclimate.com/repos/522e9b497e00a46a0d01227c/feed)
-[![Test Coverage](https://codeclimate.com/repos/522e9b497e00a46a0d01227c/badges/ae868ca76e52852ebc5a/coverage.svg)](https://codeclimate.com/repos/522e9b497e00a46a0d01227c/feed)
+[![Code Climate](https://codeclimate.com/github/abak-press/redis_counters/badges/gpa.svg)](https://codeclimate.com/github/abak-press/redis_counters)
+[![Test Coverage](https://codeclimate.com/github/abak-press/redis_counters/badges/coverage.svg)](https://codeclimate.com/github/abak-press/redis_counters/coverage)
 
 Набор структур данных на базе Redis.
 
