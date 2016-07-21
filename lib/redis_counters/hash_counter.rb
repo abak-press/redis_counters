@@ -46,10 +46,10 @@ module RedisCounters
     # Returns Array of WithIndifferentAccess.
     #
     def partition_data(cluster, partition)
-      keys = group_keys.dup << :value
+      keys = group_keys.dup.unshift(:value)
       redis.hgetall(key(partition, cluster)).inject(Array.new) do |result, (key, value)|
-        values = key.split(value_delimiter, -1) << format_value(value)
-        values = values.from(1) unless group_keys.present?
+        values = key.split(value_delimiter, -1).unshift(format_value(value))
+        values.delete_at(1) unless group_keys.present?
         result << Hash[keys.zip(values)].with_indifferent_access
       end
     end
