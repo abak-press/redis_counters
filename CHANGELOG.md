@@ -1,6 +1,10 @@
 
 #### [Current]
-
+ * 2016-07-21 [4f56a74](../../commit/4f56a74) - __(Stanislav Gordanov)__ Release 1.4.0
+ * 2016-07-20 [e6be297](../../commit/e6be297) - __(Stanislav Gordanov)__ feat: переместит значение инкремента в начало массива данных
+ * 2015-07-26 [e4771c5](../../commit/e4771c5) - __(Artem Napolskih)__ Update README.md
+ * 2015-02-19 [c86a1aa](../../commit/c86a1aa) - __(bibendi)__ commit changelog after generate it
+ * 2015-02-19 [b5ec9f8](../../commit/b5ec9f8) - __(bibendi)__ change releasing tasks to upload on rubygems
 
 #### v1.2.0
  * 2014-11-10 [be642ce](../../commit/be642ce) - __(Artem Napolskih)__ Release 1.2.0
