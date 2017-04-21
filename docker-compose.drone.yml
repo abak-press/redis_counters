@@ -5,9 +5,3 @@ services:
     volumes:
       - .:/app
       - /bundle:/bundle
-      - ssh-data:/ssh:ro
-
-volumes:
-  ssh-data:
-    external:
-      name: ssh_data

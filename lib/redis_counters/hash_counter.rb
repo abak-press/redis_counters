@@ -21,7 +21,11 @@ module RedisCounters
         group_params = [field_name]
       end
 
-      group_params.join(value_delimiter)
+      if value_delimiter.is_a?(Array)
+        group_params.join(value_delimiter.first)
+      else
+        group_params.join(value_delimiter)
+      end
     end
 
     def field_name
@@ -35,7 +39,7 @@ module RedisCounters
     # Protected: Возвращает данные партиции в виде массива хешей.
     #
     # Каждый элемент массива, представлен в виде хеша, содержащего все параметры кластеризации и
-    # значение счетчика в ключе :value. Данные в счётчике могут эскейпиться бекслэшем: "a:b:c\\:d"
+    # значение счетчика в ключе :value.
     #
     # cluster - Array - листовой кластер - массив параметров однозначно идентифицирующий кластер.
     # partition - Array - листовая партиция - массив параметров однозначно идентифицирующий партицию.
@@ -43,9 +47,23 @@ module RedisCounters
     # Returns Array of HashWithIndifferentAccess.
     def partition_data(cluster, partition)
       keys = group_keys.dup.unshift(:value)
+
+      if delimiter_is_ary = value_delimiter.is_a?(Array)
+        new_delim, old_delim = value_delimiter
+      end
+
       redis.hgetall(key(partition, cluster)).inject(Array.new) do |result, (key, value)|
-        # values = key.split(/(?<!\\)#{value_delimiter}/, -1).unshift(format_value(value))
-        values = key.split(value_delimiter, -1).unshift(format_value(value))
+        values = if delimiter_is_ary
+                   if key.include?(new_delim)
+                     key.split(new_delim, -1)
+                   else
+                     key.split(old_delim, -1)
+                   end
+                 else
+                   key.split(value_delimiter, -1)
+                 end
+
+        values = values.map(&:presence).unshift(format_value(value))
         values.delete_at(1) unless group_keys.present?
         result << Hash[keys.zip(values)].with_indifferent_access
       end

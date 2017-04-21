@@ -4,6 +4,7 @@ require 'mock_redis'
 require 'timecop'
 require 'codeclimate-test-reporter'
 require 'simplecov'
+require 'pry-byebug'
 
 SimpleCov.start('test_frameworks')
 

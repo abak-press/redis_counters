@@ -5,7 +5,6 @@ environment:
   RUBY_IMAGE_TAG: 2.2-latest
   COMPOSE_FILE_EXT: development
   RAILS_ENV: test
-  APRESS_GEMS_CREDENTIALS: ""
 
 compose:
   files:
@@ -38,6 +37,5 @@ interaction:
 
 provision:
   - docker volume create --name bundler_data
-  - dip bundle config --local https://gems.railsc.ru/ ${APRESS_GEMS_CREDENTIALS}
   - dip clean
   - dip bundle install
