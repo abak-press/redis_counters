@@ -1,0 +1,25 @@
+build:
+  test:
+    image: abakpress/dind-testing
+    pull: true
+    privileged: true
+    volumes:
+      - /home/data/drone/images:/images
+      - /home/data/drone/gems:/bundle
+      - /home/data/drone/key_cache:/ssh_keys
+    environment:
+      - COMPOSE_FILE_EXT=drone
+      - POSTGRES_IMAGE_TAG=9.3-latest
+      - SPHINX_IMAGE_TAG=2.2-latest
+    commands:
+      - wrapdocker docker -v
+
+      - fetch-images
+        --image whilp/ssh-agent
+        --image abakpress/ruby-app:$RUBY_IMAGE_TAG
+        --image abakpress/postgres-db:$POSTGRES_IMAGE_TAG
+        --image abakpress/sphinx-index:$SPHINX_IMAGE_TAG
+
+      - dip ssh add -T -v /ssh_keys -k /ssh_keys/id_rsa
+      - dip provision
+      - dip rspec

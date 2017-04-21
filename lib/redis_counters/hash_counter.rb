@@ -1,11 +1,8 @@
-# coding: utf-8
 require 'redis_counters/base_counter'
 require 'redis_counters/clusterize_and_partitionize'
 
 module RedisCounters
-
   # Счетчик на основе redis-hash, с возможностью партиционирования и кластеризации значений.
-
   class HashCounter < BaseCounter
     include ClusterizeAndPartitionize
 
@@ -38,16 +35,16 @@ module RedisCounters
     # Protected: Возвращает данные партиции в виде массива хешей.
     #
     # Каждый элемент массива, представлен в виде хеша, содержащего все параметры кластеризации и
-    # значение счетчика в ключе :value.
+    # значение счетчика в ключе :value. Данные в счётчике могут эскейпиться бекслэшем: "a:b:c\\:d"
     #
     # cluster - Array - листовой кластер - массив параметров однозначно идентифицирующий кластер.
     # partition - Array - листовая партиция - массив параметров однозначно идентифицирующий партицию.
     #
-    # Returns Array of WithIndifferentAccess.
-    #
+    # Returns Array of HashWithIndifferentAccess.
     def partition_data(cluster, partition)
       keys = group_keys.dup.unshift(:value)
       redis.hgetall(key(partition, cluster)).inject(Array.new) do |result, (key, value)|
+        # values = key.split(/(?<!\\)#{value_delimiter}/, -1).unshift(format_value(value))
         values = key.split(value_delimiter, -1).unshift(format_value(value))
         values.delete_at(1) unless group_keys.present?
         result << Hash[keys.zip(values)].with_indifferent_access
@@ -66,5 +63,4 @@ module RedisCounters
       @float_mode ||= options.fetch(:float_mode, false)
     end
   end
-
 end
