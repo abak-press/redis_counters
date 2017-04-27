@@ -1,6 +1,6 @@
 # RedisCounters
 
-[![Dolly](http://dolly.railsc.ru/badges/abak-press/redis_counters/master)](http://dolly.railsc.ru/projects/36/builds/latest/?ref=master)
+[![Build Status](https://drone.railsc.ru/api/badges/abak-press/redis_counters/status.svg)](https://drone.railsc.ru/abak-press/redis_counters)
 [![Code Climate](https://codeclimate.com/github/abak-press/redis_counters/badges/gpa.svg)](https://codeclimate.com/github/abak-press/redis_counters)
 [![Test Coverage](https://codeclimate.com/github/abak-press/redis_counters/badges/coverage.svg)](https://codeclimate.com/github/abak-press/redis_counters/coverage)
 

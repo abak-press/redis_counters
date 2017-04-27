@@ -1,11 +1,8 @@
-# coding: utf-8
 require 'forwardable'
 require 'active_support/core_ext/class/attribute'
 
 module RedisCounters
-
   # Базовый класс счетчика на основе Redis.
-
   class BaseCounter
     extend Forwardable
 
@@ -22,10 +19,13 @@ module RedisCounters
     # opts - Hash - хеш опций счетчика:
     #        counter_name - Symbol/String - идентификатор счетчика.
     #        key_delimiter - String - разделитель ключа (опционально).
-    #        value_delimiter - String - разделитель значений (опционально).
+    #        value_delimiter - Array[String] или String, разделитель значений. Если это массив, то первый элемент будет
+    #                          считатся новым разделителем, а второй старым. Все данные будут записываться, используя
+    #                          новый. Старый будет использоваться только для старых данных. Так что если надо сменить
+    #                          делимитр у счётчика, например с ':' на '�', то сперва надо будет установить его на ['�',
+    #                          ':'], а после дампа старых данных в БД, на '�'.
     #
     # Returns RedisCounters::BaseCounter.
-    #
     def self.create(redis, opts)
       counter_class = opts.fetch(:counter_class).to_s.constantize
       counter_class.new(redis, opts)
@@ -80,5 +80,4 @@ module RedisCounters
 
     def_delegator :redis, :multi, :transaction
   end
-
 end
