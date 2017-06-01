@@ -63,7 +63,7 @@ module RedisCounters
                    key.split(value_delimiter, -1)
                  end
 
-        values = values.map(&:presence).unshift(format_value(value))
+        values.unshift(format_value(value))
         values.delete_at(1) unless group_keys.present?
         result << Hash[keys.zip(values)].with_indifferent_access
       end

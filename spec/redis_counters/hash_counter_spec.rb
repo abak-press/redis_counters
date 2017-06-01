@@ -257,7 +257,7 @@ describe RedisCounters::HashCounter do
       it { expect(counter.data(partitions).first[:param4]).to eq '1' }
       it { expect(counter.data(partitions).second[:value]).to eq 5 }
       it { expect(counter.data(partitions).second[:param3]).to eq '31' }
-      it { expect(counter.data(partitions).second[:param4]).to eq nil }
+      it { expect(counter.data(partitions).second[:param4]).to eq '' }
     end
 
     context 'when group_keys given' do
