@@ -1,5 +1,14 @@
 
 #### [Current]
+
+
+#### v1.5.0
+ * 2017-07-07 [5163f3f](../../commit/5163f3f) - __(Pavel Galkin)__ Release 1.5.0
+ * 2017-04-21 [d64da5e](../../commit/d64da5e) - __(Pavel Galkin)__ feat: support two value delimiters
+ * 2017-04-21 [a4f458c](../../commit/a4f458c) - __(Pavel Galkin)__ chore: update infrastructure
+
+#### v1.4.0
+ * 2016-07-21 [5ad69e0](../../commit/5ad69e0) - __(Stanislav Gordanov)__ Update CHANGELOG.md
  * 2016-07-21 [4f56a74](../../commit/4f56a74) - __(Stanislav Gordanov)__ Release 1.4.0
  * 2016-07-20 [e6be297](../../commit/e6be297) - __(Stanislav Gordanov)__ feat: переместит значение инкремента в начало массива данных
  * 2015-07-26 [e4771c5](../../commit/e4771c5) - __(Artem Napolskih)__ Update README.md
