@@ -1,0 +1,13 @@
+version: '2'
+
+services:
+  app:
+    volumes:
+      - .:/app
+      - ../:/localgems
+      - bundler-data:/bundle
+
+volumes:
+  bundler-data:
+    external:
+      name: bundler_data

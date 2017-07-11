@@ -1,0 +1,41 @@
+version: '1'
+
+environment:
+  DOCKER_RUBY_VERSION: 2.2
+  RUBY_IMAGE_TAG: 2.2-latest
+  COMPOSE_FILE_EXT: development
+  RAILS_ENV: test
+
+compose:
+  files:
+    - docker-compose.yml
+    - docker-compose.${COMPOSE_FILE_EXT}.yml
+
+interaction:
+  sh:
+    service: app
+
+  irb:
+    service: app
+    command: irb
+
+  bundle:
+    service: app
+    command: bundle
+
+  rake:
+    service: app
+    command: bundle exec rake
+
+  rspec:
+    service: app
+    command: bundle exec rspec
+
+  clean:
+    service: app
+    command: rm -f Gemfile.lock gemfiles/*.gemfile.*
+
+provision:
+  - docker volume create --name bundler_data
+  - dip clean
+  - dip bundle install

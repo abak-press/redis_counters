@@ -257,7 +257,7 @@ describe RedisCounters::HashCounter do
       it { expect(counter.data(partitions).first[:param4]).to eq '1' }
       it { expect(counter.data(partitions).second[:value]).to eq 5 }
       it { expect(counter.data(partitions).second[:param3]).to eq '31' }
-      it { expect(counter.data(partitions).second[:param4]).to eq '' }
+      it { expect(counter.data(partitions).second[:param4]).to eq nil }
     end
 
     context 'when group_keys given' do
@@ -444,6 +444,68 @@ describe RedisCounters::HashCounter do
     it { expect(counter.data.second[:value]).to eq 2 }
     it { expect(counter.data.third[:param3]).to eq '21:54' }
     it { expect(counter.data.third[:value]).to eq 3 }
+  end
+
+  context 'two delimiters' do
+    let(:options) do
+      {
+        counter_name:    :test_counter,
+        group_keys:      [:title, :url],
+        partition_keys:  [:date],
+        key_delimiter:   '&',
+        value_delimiter: %W(\uFFFD :)
+      }
+    end
+    let(:partition) { {title: 'Main', url: 'http://example.com', date: '2017-04-21'} }
+
+    before { counter.increment(partition) }
+
+    it 'uses the first (new) delimiter for writing' do
+      expect(counter.send(:field)).to eq('Main�http://example.com')
+      expect(counter.data).to eq([{'value' => 1, 'title' => 'Main', 'url' => 'http://example.com'}])
+    end
+  end
+
+  context 'new delimiter added when there is data separated by the old one' do
+    let(:options) do
+      {
+        counter_name:    :test_counter,
+        group_keys:      [:title, :url],
+        partition_keys:  [:date],
+        key_delimiter:   '&',
+        value_delimiter: %W(\uFFFD :)
+      }
+    end
+    let(:partition) { {title: 'Main', url: 'http://example.com', date: '2017-04-21'} }
+
+    before do
+      redis.hincrbyfloat('test_counter&2017-04-21', 'Main:/about', 1.0)
+    end
+
+    it 'understands the old delimiter' do
+      expect(counter.data).to eq([{'value' => 1, 'title' => 'Main', 'url' => '/about'}])
+    end
+  end
+
+  context 'new delimiter added and there is data separated by it but contains the old delimiter' do
+    let(:options) do
+      {
+        counter_name:    :test_counter,
+        group_keys:      [:title, :url],
+        partition_keys:  [:date],
+        key_delimiter:   '&',
+        value_delimiter: %W(\uFFFD :)
+      }
+    end
+    let(:partition) { {title: 'Main', url: 'http://example.com', date: '2017-04-21'} }
+
+    before do
+      redis.hincrbyfloat('test_counter&2017-04-21', 'Main�http://example.com', 1.0)
+    end
+
+    it 'uses the new delimiter' do
+      expect(counter.data).to eq([{'value' => 1, 'title' => 'Main', 'url' => 'http://example.com'}])
+    end
   end
 
   context 'when check custom increment' do
