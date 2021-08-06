@@ -1,7 +1,7 @@
 require 'spec_helper'
 
 describe RedisCounters::BaseCounter do
-  let(:redis) { MockRedis.new }
+  let(:redis) { Redis.current }
 
   let(:options) { {
     :counter_class => RedisCounters::HashCounter,

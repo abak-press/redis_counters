@@ -5,7 +5,7 @@ describe RedisCounters::UniqueValuesLists::Blocking do
   it_behaves_like 'unique_values_lists/set'
 
   context 'when check partitions list' do
-    let(:redis) { MockRedis.new }
+    let(:redis) { Redis.current }
     let(:values) { rand(10) + 1 }
     let(:partitions_list_postfix) { described_class.const_get(:PARTITIONS_LIST_POSTFIX) }
 
