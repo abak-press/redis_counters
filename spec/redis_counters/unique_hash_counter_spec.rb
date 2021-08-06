@@ -1,7 +1,7 @@
 require 'spec_helper'
 
 describe RedisCounters::UniqueHashCounter do
-  let(:redis) { MockRedis.new }
+  let(:redis) { Redis.current }
   let(:unique_list_postfix) { described_class.const_get(:UNIQUE_LIST_POSTFIX) }
 
   let(:options) { {
@@ -76,8 +76,8 @@ describe RedisCounters::UniqueHashCounter do
 
     it { expect(redis.lrange('test_counter_uq:1:partitions', 0, -1)).to eq ['2013-04-28', '2013-04-27'] }
     it { expect(redis.lrange('test_counter_uq:2:partitions', 0, -1)).to eq ['2013-04-27'] }
-    it { expect(redis.smembers('test_counter_uq:1:2013-04-27')).to eq ['4'] }
-    it { expect(redis.smembers('test_counter_uq:2:2013-04-27')).to eq ['3', '2', '1'] }
-    it { expect(redis.smembers('test_counter_uq:1:2013-04-28')).to eq ['5', '1'] }
+    it { expect(redis.smembers('test_counter_uq:1:2013-04-27')).to match_array ['4'] }
+    it { expect(redis.smembers('test_counter_uq:2:2013-04-27')).to match_array ['3', '2', '1'] }
+    it { expect(redis.smembers('test_counter_uq:1:2013-04-28')).to match_array ['5', '1'] }
   end
 end

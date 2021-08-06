@@ -1,6 +1,5 @@
-# coding: utf-8
 shared_examples_for 'unique_values_lists/expirable' do
-  let(:redis) { MockRedis.new }
+  let(:redis) { Redis.current }
   let(:counter) { described_class.new(redis, options) }
 
   after do

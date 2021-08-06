@@ -1,6 +1,5 @@
-# coding: utf-8
 shared_examples_for 'unique_values_lists/set' do
-  let(:redis) { MockRedis.new }
+  let(:redis) { Redis.current }
   let(:values) { rand(10) + 1 }
 
   let(:counter) { described_class.new(redis, options) }

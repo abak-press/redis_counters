@@ -1,6 +1,5 @@
-# coding: utf-8
 shared_examples_for 'unique_values_lists/common' do
-  let(:redis) { MockRedis.new }
+  let(:redis) { Redis.current }
   let(:values) { rand(10) + 1 }
 
   let(:options) { {
@@ -139,9 +138,10 @@ shared_examples_for 'unique_values_lists/common' do
 
       context 'when no partition given' do
         it { expect(counter.partitions(cluster1_subcluster1)).to have(3).partitions }
-        it { expect(counter.partitions(cluster1_subcluster1).first).to eq part1_subpart1 }
-        it { expect(counter.partitions(cluster1_subcluster1).second).to eq part1_subpart2 }
-        it { expect(counter.partitions(cluster1_subcluster1).third).to eq part2_subpart1 }
+        it do
+          expect(counter.partitions(cluster1_subcluster1)).
+            to match_array [part1_subpart1, part1_subpart2, part2_subpart1]
+        end
         #
         it { expect(counter.partitions(cluster2_subcluster1)).to have(1).partitions }
         it { expect(counter.partitions(cluster2_subcluster1).first).to eq part1_subpart1 }
@@ -149,8 +149,10 @@ shared_examples_for 'unique_values_lists/common' do
 
       context 'when not leaf partition given' do
         it { expect(counter.partitions(cluster1_subcluster1.merge(:part => :part1))).to have(2).partitions }
-        it { expect(counter.partitions(cluster1_subcluster1.merge(:part => :part1)).first).to eq part1_subpart1 }
-        it { expect(counter.partitions(cluster1_subcluster1.merge(:part => :part1)).second).to eq part1_subpart2 }
+        it do
+          expect(counter.partitions(cluster1_subcluster1.merge(:part => :part1))).
+            to match_array [part1_subpart1, part1_subpart2]
+        end
       end
 
       context 'when leaf partition given' do
@@ -182,15 +184,12 @@ shared_examples_for 'unique_values_lists/common' do
 
       context 'when no partition given' do
         it { expect(counter.partitions).to have(3).partitions }
-        it { expect(counter.partitions.first).to eq part1_subpart1 }
-        it { expect(counter.partitions.second).to eq part1_subpart2 }
-        it { expect(counter.partitions.third).to eq part2_subpart1 }
+        it { expect(counter.partitions).to match_array [part1_subpart1, part1_subpart2, part2_subpart1] }
       end
 
       context 'when not leaf partition given' do
         it { expect(counter.partitions(:part => :part1)).to have(2).partitions }
-        it { expect(counter.partitions(:part => :part1).first).to eq part1_subpart1 }
-        it { expect(counter.partitions(:part => :part1).second).to eq part1_subpart2 }
+        it { expect(counter.partitions(:part => :part1)).to match_array [part1_subpart1, part1_subpart2] }
       end
 
       context 'when leaf partition given' do

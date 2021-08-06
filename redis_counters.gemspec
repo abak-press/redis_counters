@@ -1,4 +1,3 @@
-# coding: utf-8
 lib = File.expand_path('../lib', __FILE__)
 $LOAD_PATH.unshift(lib) unless $LOAD_PATH.include?(lib)
 require 'redis_counters/version'
@@ -16,12 +15,13 @@ Gem::Specification.new do |spec|
   spec.test_files    = spec.files.grep(%r{^(test|spec|features)/})
   spec.require_paths = ['lib']
 
-  spec.add_dependency 'activesupport', '>= 3.0', '< 5'
+  spec.add_runtime_dependency 'activesupport', '>= 4.0', '< 5'
 
   spec.add_development_dependency 'bundler'
   spec.add_development_dependency 'rake'
   spec.add_development_dependency 'rspec', '~> 2.14.0'
-  spec.add_development_dependency 'mock_redis'
+  spec.add_development_dependency 'redis', '>= 3.0'
+  spec.add_development_dependency 'appraisal', '>= 1.0.2'
   spec.add_development_dependency 'timecop'
   spec.add_development_dependency 'codeclimate-test-reporter', '>= 0.4.1'
   spec.add_development_dependency 'simplecov'

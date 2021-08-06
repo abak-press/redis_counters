@@ -6,4 +6,11 @@ services:
     environment:
       - BUNDLE_PATH=/bundle/$DOCKER_RUBY_VERSION
       - BUNDLE_CONFIG=/app/.bundle/config
+      - TEST_REDIS_HOST=redis
     command: bash
+    depends_on:
+      - redis
+
+  redis:
+    image: redis:$REDIS_IMAGE_TAG
+    command: 'redis-server --bind 0.0.0.0'
