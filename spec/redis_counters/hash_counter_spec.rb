@@ -504,6 +504,27 @@ describe RedisCounters::HashCounter do
     end
   end
 
+  context 'when non-utf8 data contains delimeters' do
+    let(:options) do
+      {
+        counter_name:    :test_counter,
+        group_keys:      [:title, :url],
+        partition_keys:  [:date],
+        key_delimiter:   '&',
+        value_delimiter: '|'
+      }
+    end
+    let(:partition) { {title: "Erg\xE4nzendes", url: 'http://example.com', date: '2022-05-04'} }
+
+    before do
+      redis.hincrbyfloat('test_counter&2022-05-04', "Erg\xE4nzendes|http://example.com", 1.0)
+    end
+
+    it 'successfully splits data' do
+      expect(counter.data).to eq([{'value' => 1, 'title' => 'Ergänzendes', 'url' => 'http://example.com'}])
+    end
+  end
+
   context 'when check custom increment' do
     let(:options) { {
       :counter_name => :test_counter,
