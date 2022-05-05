@@ -1,9 +1,4 @@
-if RUBY_VERSION < '2.4'
-  appraise 'rails4.0' do
-    gem 'activesupport', '~> 4.0.0'
-  end
-end
-
+# frozen_string_literal: true
 appraise 'rails4.2' do
   gem 'activesupport', '~> 4.2.0'
 end

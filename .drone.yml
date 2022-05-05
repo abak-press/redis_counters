@@ -41,24 +41,6 @@ spec_step_common: &spec_step_common
     - dip rspec
 
 steps:
-  - name: Tests Ruby 2.2
-    environment:
-      COMPOSE_FILE_EXT: drone
-      DOCKER_RUBY_VERSION: 2.2
-      RUBY_IMAGE_TAG: 2.2-latest
-      REDIS_IMAGE_TAG: 4-alpine
-      RAILS_ENV: test
-    <<: *spec_step_common
-
-  - name: Tests Ruby 2.3
-    environment:
-      COMPOSE_FILE_EXT: drone
-      DOCKER_RUBY_VERSION: 2.3
-      RUBY_IMAGE_TAG: 2.3-latest
-      REDIS_IMAGE_TAG: 4-alpine
-      RAILS_ENV: test
-    <<: *spec_step_common
-
   - name: Tests Ruby 2.4
     environment:
       COMPOSE_FILE_EXT: drone
