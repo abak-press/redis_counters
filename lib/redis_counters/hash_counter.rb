@@ -1,5 +1,6 @@
 require 'redis_counters/base_counter'
 require 'redis_counters/clusterize_and_partitionize'
+require 'string_tools'
 
 module RedisCounters
   # Счетчик на основе redis-hash, с возможностью партиционирования и кластеризации значений.
@@ -53,6 +54,7 @@ module RedisCounters
       end
 
       redis.hgetall(key(partition, cluster)).inject(Array.new) do |result, (key, value)|
+        key = key.dup.to_utf8
         values = if delimiter_is_ary
                    if key.include?(new_delim)
                      key.split(new_delim, -1)
