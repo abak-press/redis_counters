@@ -1,6 +1,13 @@
+# v1.5.2
+
+* 2022-05-05 [9c3a157](../../commit/9c3a157) - __(Igor Prudnikov)__ Release 1.5.2 
+* 2022-05-05 [fb05645](../../commit/fb05645) - __(Igor Prudnikov)__ fix: fix hash counter with delimeters containing non-utf8 data 
+https://jira.railsc.ru/browse/BPC-20533
+
+* 2022-05-05 [e10e51d](../../commit/e10e51d) - __(Igor Prudnikov)__ chore: remove older ruby versions support 
+
 # v1.5.1
 
-* 2021-08-06 [3302af4](../../commit/3302af4) - __(TamarinEA)__ Release 1.5.1 
 * 2021-08-06 [09ed078](../../commit/09ed078) - __(TamarinEA)__ chore: support ruby 2.4 and use redis in test 
 
 # v1.5.0
